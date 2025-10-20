@@ -1,0 +1,3911 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Character encoding for proper text display -->
+  <meta charset="utf-8" />
+  
+  <!-- Viewport meta tag: Ensures proper design across devices
+       - width=device-width: Makes the page adapt to device screen width
+       - initial-scale=1: Prevents unwanted zooming -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Page title displayed in browser tab -->
+  <title>House Flipping Calculator Pro — Standalone</title>
+
+  <!-- External CSS Framework: Tailwind CSS for rapid styling
+       - Loaded from CDN for utility-first CSS classes
+       - Provides design, spacing, colors, typography -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind CSS Configuration
+       - Enables class-based dark mode toggling
+       - Allows switching between light/dark themes dynamically -->
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  
+  <!-- Chart.js Library: JavaScript charting library
+       - Used for rendering comparison charts (bar/line combinations)
+       - Displays profit analysis and ROI comparisons between saved deals -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+   <!-- Layout Management Script
+        Purpose: Ensures the input calculator panel matches the height of the Deal Information panel
+        for consistent visual alignment across different screen sizes and content amounts -->
+   <script>
+    /**
+     * Function: matchInputToDealInfoHeight
+     * Synchronizes the height of the calculator input panel with the Deal Information panel
+     * 
+     * How it works:
+     * 1. Finds the Deal Information panel (contains min-height style)
+     * 2. Finds the calculator input panel (has ID 'calculator')  
+     * 3. Sets calculator height to match Deal Information panel height
+     * 
+     * When it runs:
+     * - On page load (DOMContentLoaded event)
+     * - On window resize to maintain alignment when viewport changes
+     */
+    function matchInputToDealInfoHeight() {
+      var dealInfoPanel = document.querySelector('.panel.p-5[style*="min-height"]');
+      var inputPanel = document.getElementById('calculator');
+      if (dealInfoPanel && inputPanel) {
+        inputPanel.style.height = dealInfoPanel.offsetHeight + 'px';
+      }
+    }
+    
+    // Attach the height matching function to key events
+    window.addEventListener('DOMContentLoaded', matchInputToDealInfoHeight);
+    window.addEventListener('resize', matchInputToDealInfoHeight);
+  </script>
+  
+  <style>
+    /* Ensure loan structure select options show full text */
+    /* Make loan structure select match other input boxes in width and appearance */
+    select.custom-input[name="loanStructure"] {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      height: 44px !important;
+      padding-top: 0 !important;
+    }
+
+  /* --- ALIGNMENT FIXES FOR INPUTS, KEY METRICS, PROFITABILITY ANALYSIS --- */
+    .panel {
+      box-sizing: border-box !important;
+    }
+    .custom-input {
+      box-sizing: border-box !important;
+      height: 44px !important;
+      padding-top: 0.75rem !important;
+      padding-bottom: 0.75rem !important;
+      vertical-align: middle !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .grid.grid-cols-4.gap-4 > div,
+    .grid.grid-cols-4.gap-4 > .input-group,
+    .grid.grid-cols-4.gap-4 > .grid-panel-cell {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      align-items: stretch !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* STRONGER SPECIFICITY - Override Tailwind and force correct alignment */
+    #calculator .grid.grid-cols-4.gap-4 > div,
+    .panel .grid.grid-cols-4.gap-4 > div,
+    .panel .grid.grid-cols-4.gap-4 > .input-group,
+    .panel .grid.grid-cols-4.gap-4 > .grid-panel-cell {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      align-items: stretch !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      vertical-align: top !important;
+    }
+
+    /* Force all input containers to align from top */
+    #calculator .grid > div,
+    .panel .grid > div {
+      align-self: flex-start !important;
+    }
+
+    /* COMPREHENSIVE ALIGNMENT FIXES FOR MISALIGNED FIELDS */
+    
+    /* Fix for all grid containers - ensure consistent baseline alignment */
+    .grid.grid-cols-4.gap-4 {
+      align-items: flex-start !important;
+    }
+    
+    /* Ensure all labels have consistent height and positioning */
+    .grid.grid-cols-4.gap-4 label {
+      display: block !important;
+      min-height: 40px !important; /* Use min-height instead of fixed height */
+      height: auto !important; /* Allow expansion for longer text */
+      margin-bottom: 4px !important;
+      line-height: 1.3 !important;
+      overflow: visible !important; /* Allow text to show properly */
+      word-wrap: break-word !important; /* Allow word wrapping */
+    }
+    
+    /* EXCEPTION: Allow lender label to show full text without height restriction */
+    .lender-align .lender-label {
+      height: auto !important; /* Override fixed height for this label */
+      max-height: none !important;
+      overflow: visible !important;
+      white-space: normal !important;
+      text-overflow: clip !important;
+      padding-right: 6px !important;
+      box-sizing: border-box !important;
+      text-align: right !important;
+      line-height: 1.3 !important;
+      min-height: 40px !important; /* Ensure minimum space for multi-line text */
+    }
+    
+    /* STRONGER ALIGNMENT FIXES - Override all conflicts */
+    .grid.grid-cols-4.gap-4 > div {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important; /* CRITICAL: must be flex-start */
+      align-items: stretch !important;
+      min-height: 90px !important; /* Increased to accommodate taller labels */
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    /* Override ALL manual margin classes that cause misalignment */
+    .grid.grid-cols-4.gap-4 .mt-1,
+    .grid.grid-cols-4.gap-4 .mt-2,
+    /* Grid alignment rules for both 4-column and 2-column layouts */
+    .grid.grid-cols-4.gap-4 .mt-3,
+    .grid.grid-cols-4.gap-4 .mt-4,
+    .grid.grid-cols-4.gap-4 .mt-5,
+    .grid.grid-cols-4.gap-4 .mt-6,
+    .grid.grid-cols-4.gap-4 .mt-7,
+    .grid.grid-cols-4.gap-4 .mt-8,
+    .grid.grid-cols-4.gap-4 .mt-9,
+    .grid.grid-cols-4.gap-4 .relative,
+    .grid.grid-cols-2.gap-4 .mt-3,
+    .grid.grid-cols-2.gap-4 .mt-4,
+    .grid.grid-cols-2.gap-4 .mt-5,
+    .grid.grid-cols-2.gap-4 .mt-6,
+    .grid.grid-cols-2.gap-4 .mt-7,
+    .grid.grid-cols-2.gap-4 .mt-8,
+    .grid.grid-cols-2.gap-4 .mt-9,
+    .grid.grid-cols-2.gap-4 .relative {
+      margin-top: auto !important; /* Push to bottom for perfect alignment */
+    }
+    
+    /* Force input alignment regardless of label variations - both 4-col and 2-col */
+    .grid.grid-cols-4.gap-4 input,
+    .grid.grid-cols-4.gap-4 select,
+    .grid.grid-cols-4.gap-4 .custom-input,
+    .grid.grid-cols-2.gap-4 input,
+    .grid.grid-cols-2.gap-4 select,
+    .grid.grid-cols-2.gap-4 .custom-input {
+      margin-top: auto !important; /* This ensures perfect alignment */
+      height: 44px !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Force all input fields to have identical dimensions and positioning - both layouts */
+    .grid.grid-cols-4.gap-4 .custom-input,
+    .grid.grid-cols-4.gap-4 input,
+    .grid.grid-cols-4.gap-4 select,
+    .grid.grid-cols-2.gap-4 .custom-input,
+    .grid.grid-cols-2.gap-4 input,
+    .grid.grid-cols-2.gap-4 select {
+      height: 44px !important;
+      box-sizing: border-box !important;
+      vertical-align: top !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    
+    /* Specific fixes for consistently problematic fields */
+    
+    /* Input fields alignment - fix misc costs and loan term */
+    input[name="miscCosts"],
+    input[name="loanTerm"] {
+      height: 44px !important;
+      vertical-align: top !important;
+      margin-top: 0 !important;
+    }
+    
+    /* Apply flexible label height to ALL labels in Key Metrics and Profitability Analysis */
+    .panel .grid.grid-cols-4.gap-4 > div .small.muted {
+      min-height: 40px !important;
+      height: auto !important;
+      overflow: visible !important;
+      white-space: normal !important;
+      text-overflow: clip !important;
+      line-height: 1.3 !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      margin-bottom: 4px !important;
+    }
+    
+    /* Ensure ALL input fields across the calculator have consistent dimensions */
+    .custom-input, input.custom-input {
+      height: 44px !important;
+      min-height: 44px !important;
+      max-height: 44px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      margin-top: auto !important;
+    }
+
+    /* Keep ALL input fields the same size - no height changes to calculated boxes */
+    .panel .grid.grid-cols-4.gap-4 > div input.custom-input {
+      height: 44px !important;
+      min-height: 44px !important;
+      max-height: 44px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Override manual margin classes in Key Metrics and Profitability Analysis sections */
+    .panel .grid.grid-cols-4.gap-4 > div .mt-1,
+    .panel .grid.grid-cols-4.gap-4 > div .mt-2,
+    .panel .grid.grid-cols-4.gap-4 > div .mt-8,
+    .panel .grid.grid-cols-4.gap-4 > div .mt-9,
+    #totalProjectCost,
+    #netResale,
+    #profit_netFromSale,
+    #profit_netProceeds,
+    #profit_netProfit {
+      margin-top: auto !important;
+    }
+
+    /* Key metrics alignment - fix initial loan and ideal purchase */
+    #initialLoan,
+    #idealPurchase {
+      height: 44px !important;
+      vertical-align: top !important;
+      margin-top: auto !important;
+      overflow: visible !important;
+    }
+    
+    /* Profitability analysis alignment fixes */
+    #profit_totalLoanRepayment,
+    #profit_outOfPocket,
+    #profit_roi {
+      height: 44px !important;
+      vertical-align: top !important;
+      margin-top: auto !important;
+      overflow: visible !important;
+    }
+    
+    /* Ensure all grid cells have consistent internal spacing */
+    .grid.grid-cols-4.gap-4 > div > .relative {
+      margin-top: 0 !important;
+    }
+    
+    /* Override any conflicting Tailwind classes that might cause misalignment */
+    .grid.grid-cols-4.gap-4 > div {
+      min-height: 90px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      align-items: flex-start !important;
+      align-self: flex-start !important;
+      vertical-align: top !important;
+    }
+    
+    /* Specific rules for INPUT SECTION ONLY - maintain original behavior */
+    #calculator .grid.grid-cols-4.gap-4 > div,
+    #calculator .grid.grid-cols-4.gap-4 > .input-group,
+    #calculator .grid.grid-cols-4.gap-4 > .grid-panel-cell {
+      min-height: 80px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      align-items: stretch !important;
+      align-self: flex-start !important;
+      vertical-align: top !important;
+    }
+    
+    /* Specific alignment for Key Metrics and Profitability Analysis panels only */
+    .panel .grid.grid-cols-4.gap-4 > div {
+      min-height: 100px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      align-items: flex-start !important;
+      align-self: flex-start !important;
+      vertical-align: top !important;
+    }
+    /* =================================================================
+       CSS VARIABLES AND GLOBAL STYLING
+       =================================================================
+       
+       This section defines the core visual system for the calculator:
+       - CSS custom properties for consistent theming
+       - Global typography and font settings
+       - Base layout styles and spacing */
+    
+    /* ===== CSS VARIABLES FOR THEMING =====
+       CSS custom properties that enable dynamic light/dark mode switching
+       These variables are redefined in the .dark class for theme toggling */
+
+    :root{
+      /* Light mode color palette */
+      --bg:#f6f9fc;          /* Background: Light blue-gray */
+      --panel:#ffffff;       /* Panel backgrounds: Pure white */
+      --muted:#6b7280;       /* Secondary text: Medium gray */
+      --accent:#2563eb;      /* Primary accent: Blue (buttons, borders) */
+      --accent-2:#16a34a;    /* Success green: For positive values */
+      --danger:#dc2626;      /* Error red: For delete buttons, warnings */
+      color:#0b1220;         /* Default text: Dark blue-gray */
+    }
+
+    /* ===== GLOBAL TYPOGRAPHY =====
+       Font settings applied consistently across the entire application */
+    html, body {
+      font-size: 18px !important;                    /* Base font size: Larger for readability */
+      font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif !important; /* Modern font stack */
+    }
+    
+    /* Ensure all text elements use consistent base font size except section titles */
+    body, .panel, .custom-input, .small, .muted, .deal-info-text, .big-button, 
+    .btn, .btn-accent, .btn-ghost, label, input, select, textarea {
+      font-size: 1rem !important;
+    }
+    
+    /* Section titles maintain larger font size for hierarchy */
+    h3, h4, .font-semibold {
+      font-size: 1.25rem !important;
+    }
+
+    /* ===== DARK MODE THEME VARIABLES =====
+       Alternative color palette activated when .dark class is applied to body */
+    .dark{
+      --bg:#D0D0D0;          /* Background: Light gray (softer than pure white) */
+      --panel:#0f1724;       /* Panel backgrounds: Dark blue-gray */
+      --muted:#9aa6b2;       /* Secondary text: Light blue-gray */
+      --accent:#2f80ed;      /* Primary accent: Lighter blue for contrast */
+      --accent-2:#22c55e;    /* Success green: Slightly brighter */
+      --danger:#ef4444;      /* Error red: Slightly brighter */
+      color:#e6eef6;         /* Default text: Very light blue-gray */
+    }
+
+    /* =================================================================
+       UTILITY CLASSES AND LAYOUT HELPERS
+       =================================================================
+       
+       Utility classes for consistent spacing, alignment, and component styling
+       These classes replace inline styles for better maintainability */
+
+    /* Header and navigation alignment utilities */
+    .header-left { margin-left: 20px !important; }           /* Logo spacing from left edge */
+    .theme-toggle-mr { margin-right: 20px !important; }      /* Theme toggle spacing from right edge */
+    
+    /* Panel spacing and sizing utilities */
+    .panel-tight { margin-top: 4px !important; margin-bottom: 0 !important; }  /* Tight panel spacing */
+    .margins-input { width: 200px !important; }                                 /* Fixed width for margin input */
+    .main-grid-spacing { margin-top: 3px !important; margin-bottom: 0.5rem !important; } /* Main grid spacing - reduced by 1/3 */
+    .panel-minh { min-height: 500px !important; }                               /* Minimum panel height */
+    
+    /* Button styling utilities */
+    .refresh-btn { 
+      background: #2563eb !important; 
+      color: #fff !important; 
+      min-width: 110px !important; 
+    }
+    
+    /* Compare panel custom styling */
+    .compare-panel-custom { 
+      background: var(--panel) !important; 
+      border: 1px solid #6b7280 !important; 
+      border-radius: 12px !important; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; 
+    }
+    
+    /* Chart sizing */
+    .compare-chart { height: 260px !important; width: 100% !important; }
+
+    /* =================================================================
+       SPECIAL COMPONENT STYLING
+       ================================================================= */
+
+    /* Lender checkbox alignment */
+    .lender-align {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    .lender-align .lender-label {
+      padding-right: 6px;
+      box-sizing: border-box;
+      white-space: normal;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      max-width: 100% !important;          /* Stay within column bounds */
+      text-align: right !important;
+    }
+    
+    .lender-align .lender-checkbox {
+      margin-top: 6px !important;          /* Space between label and checkbox */
+      align-self: flex-end !important;     /* Align checkbox to same right edge */
+      transform: scale(1.5) !important;    /* Make checkbox 1.5x larger */
+    }
+
+    /* Input field alignment and styling */
+    .custom-input {
+      line-height: 1.5 !important;         /* Consistent line height */
+      vertical-align: middle !important;   /* Vertical centering */
+    }
+
+    /* ===== BASE STYLES ===== */
+    /* Header dimensions: Fixed position with height implied by h-24 class (96px), padding-top on main compensates */
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto;
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Custom header container width to match main content exactly */
+    .header-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0;
+      background: #003893; /* Deep blue background moved here */
+      border-bottom: 1px solid #222;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.3); /* Dramatic layered shadow for pop-out effect */
+      border-radius: 12px;
+    }
+
+    /* ===== LIGHT MODE STYLES ===== */
+    /* Header & Navigation - Light Mode: Fixed header positioning, background applied to container */
+    header.topbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 60;
+      /* Background removed from here - now applied to .header-container */
+      /* Border removed to match container width, shadow removed to prevent full-width shadow */
+    }
+
+    header.topbar .text-lg,
+    header.topbar .small,
+    header.topbar .muted,
+    header.topbar nav .nav-btn {
+      color: #fff !important;
+    }
+
+    header.topbar nav .nav-btn {
+      border: 1px solid #fff !important;
+      background: transparent;
+      color: #fff !important;
+      font-weight: bold;
+    }
+
+    header.topbar nav .nav-btn:hover,
+    header.topbar nav .nav-btn:focus {
+      background: #0056b3;
+      color: #fff !important;
+      border-color: #fff !important;
+    }
+
+    header.topbar svg {
+      stroke: #fff !important; /* ensure house logo is visible */
+    }
+
+    /* Layout & Panel - Light Mode: Main content max-width:1200px, padding-top:96px to clear fixed header */
+    main.content{
+      padding-top:115px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    /* Panel styling: border-radius:12px, box-shadow for depth, padding varies (p-5=20px, p-6=24px) */
+    .panel{
+      background:var(--panel);
+      border:1px solid rgba(228, 56, 56, 0.04);
+      border-radius:12px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.6);
+    }
+
+    .grid-cols-4 > div {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    /* Forms & Inputs - Light Mode: Input dimensions height:44px for targets, width:100%, padding:12px */
+    .custom-input {
+      width: 100%;
+      min-width: 0;
+      padding: 0.75rem;
+      border-width: 2px;
+      border-style: solid;
+      border-color: #003893 !important;
+      border-radius: 0.5rem !important;
+      background-color: #f9fafb !important;
+      color: #6b7280 !important;
+      box-sizing: border-box;
+      height: 44px;
+      text-align: right;
+      font-size: 1rem;
+    }
+
+    input.custom-input::placeholder {
+      color: #9ca3af !important; /* Tailwind placeholder-gray-400 */
+      opacity: 1;
+    }
+
+    .panel input.custom-input:disabled {
+      border-color: #003893 !important; /* blue edges for disabled inputs in light mode */
+      background-color: #f9fafb;
+      color: #6b7280;
+      opacity: 1;
+    }
+
+    /* Make margins input field have same faded text as disabled inputs */
+    #margins {
+      color: #6b7280 !important;
+      background-color: #f9fafb !important;
+      width: 140px !important;
+    }
+
+    input[data-type="percent"].custom-input::placeholder {
+      direction: rtl;
+    }
+
+    select.custom-input[name="loanStructure"] {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #f9fafb;
+      color: #6b7280;
+      box-sizing: border-box;
+      border-width: 2px;
+      border-color: #003893;
+      transition: border-color 0.2s;
+    }
+
+    select.custom-input[name="loanStructure"]:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px #2563eb33;
+    }
+
+    /* Buttons - Light Mode */
+    .btn-accent,
+    #applyMargins,
+    #showInputs,
+    #exportAll,
+    #refreshChart,
+    #clearCompare,
+    #resetInputs {
+      background: #003893 !important;
+      color: #fff !important;
+      border: none !important;
+      font-weight: bold;
+      box-shadow: none;
+    }
+
+    .btn-accent:hover,
+    #applyMargins:hover,
+    #showInputs:hover,
+    #exportAll:hover,
+    #refreshChart:hover,
+    #clearCompare:hover,
+    #resetInputs:hover {
+      background: #0056b3 !important;
+      color: #fff !important;
+    }
+
+    #saveDeal {
+      background: #15803d !important;
+      color: #fff !important;
+      border: none !important;
+      font-weight: bold;
+    }
+
+    #saveDeal:hover {
+      background: #166534 !important;
+      color: #fff !important;
+    }
+
+    .btn-ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:inherit;
+    }
+
+    /* Chart & Visualization - Light Mode: Canvas dimensions height:260px, width:100%, border-radius:8px */
+    #compareChart {
+      height: 260px !important;
+      width: 100% !important;
+      border-radius: 8px;
+      background: #ffffff !important; /* White background for chart canvas */
+    }
+
+    /* ===== DARK MODE STYLES ===== */
+    /* Forms & Inputs - Dark Mode */
+    .dark .custom-input {
+      background-color: rgb(31 41 55) !important;
+      color: rgb(209 213 219) !important;
+      border-color: rgb(75 85 99) !important;
+    }
+
+    .dark input.custom-input::placeholder {
+      color: #6b7280 !important; /* Tailwind dark:placeholder-gray-500 */
+      opacity: 1;
+    }
+
+    .dark .panel input.custom-input:disabled {
+      border-color: #fff !important; /* white edges for disabled inputs in dark mode */
+      background-color: #1f2937;
+      color: #9aa6b2;
+      opacity: 1;
+    }
+
+    /* Make margins input field have same faded text as disabled inputs in dark mode */
+    .dark #margins {
+      color: #9aa6b2 !important;
+      background-color: #1f2937 !important;
+      width: 140px !important;
+    }
+
+    .dark select.custom-input[name="loanStructure"] {
+      border-width: 1px !important;
+      border-style: solid !important;
+      border-color: #2563eb !important;
+      border-radius: 0.5rem !important;
+      background-color: rgb(31 41 55);
+      color: rgb(209 213 219);
+    }
+
+    /* Chart & Visualization - Dark Mode */
+    /* Copy exact light mode panel styling */
+    .dark #comparePanel.panel {
+      background: #ffffff; /* Exact light mode background */
+      border: 1px solid rgb(255, 255, 255); /* Exact light mode border */
+      border-radius: 12px; /* Exact light mode border radius */
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6); /* Exact light mode shadow */
+    }
+
+    /* Maximum specificity override - copy exact light mode */
+    html body.dark #comparePanel.panel {
+      background: #ffffff !important;
+      border: 1px solid rgba(255,255,255,0.04) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6) !important;
+    }
+
+    /* Test override - very specific */
+    body.dark #comparePanel.panel {
+      background: #ffffff !important;
+      border: 1px solid rgba(255,255,255,0.04) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6) !important;
+    }
+
+    /* Override nested panels inside compare panel - keep them dark themed */
+    .dark #comparePanel .panel {
+      background: #ffffff; /* Use light theme background for nested panels */
+      border: 1px solid #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px #ffffff;
+      color: var(--color); /* Use dark theme text color */
+    }
+
+    .dark #compareChart {
+      height: 260px !important;
+      width: 100% !important;
+      border-radius: 8px !important;
+      background: #f8fafc !important; /* Light background for chart canvas */
+    }
+
+    /* Saved deals: subtle divider between entries (conservative, no spacing changes) */
+    #savedDeals > .p-3.panel + .p-3.panel {
+      /* Saved-deals divider: use a gradient pseudo-element to match light-mode pattern
+        and invert color in dark mode. Keeps spacing identical and avoids layout shifts. */
+      position: relative !important;
+      padding-top: 0.75rem !important; /* keep internal padding consistent */
+      margin-top: 0.5rem !important; /* tiny separation without changing container flow */
+     }
+     #savedDeals > .p-3.panel + .p-3.panel::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0.5rem; /* centered vertically in the small gap */
+      width: 90%;
+      max-width: 280px;
+      height: 6px; /* thicker rounded bar to match light-mode look */
+      border-radius: 6px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.08), rgba(0,0,0,0.03), rgba(0,0,0,0.08));
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06) inset;
+      pointer-events: none;
+     }
+    /* Light mode: add clear black top/bottom borders to saved-deal panels for stronger separation */
+    body:not(.dark) #savedDeals .panel {
+      border-top: 1px solid #000 !important;
+      border-bottom: 1px solid #000 !important;
+      border-left: 1px solid #000 !important;
+      border-right: 1px solid #000 !important;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.06) !important; /* keep existing subtle shadow */
+      border-radius: 8px !important;
+    }
+     /* Dark mode: invert the gradient to use soft white tones */
+    body.dark #savedDeals > .p-3.panel + .p-3.panel::before {
+      background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06), rgba(255,255,255,0.12));
+      box-shadow: 0 2px 8px rgba(255,255,255,0.02) inset;
+    }
+    /* Make sure saved-deal panels use the dark panel background in dark mode so white divider is visible */
+    body.dark #savedDeals .panel {
+      background: var(--panel) !important;
+      border-color: rgb(242, 236, 236) !important;
+      color: inherit !important;
+    }
+    /* Dark mode: boxed white border for saved-deal panels to match light-mode boxed look */
+    body.dark #savedDeals .panel {
+      border-top: 1px solid #fff !important;
+      border-bottom: 1px solid #fff !important;
+      border-left: 1px solid #fff !important;
+      border-right: 1px solid #fff !important;
+      border-radius: 8px !important;
+      box-shadow: 0 6px 14px rgba(255,255,255,0.02) !important;
+    }
+    /* Dark-mode alignment fix: ensure savedDeals container and panels use border-box and leave space for scrollbars */
+    body.dark #savedDeals {
+      box-sizing: border-box !important;
+      padding-right: 8px !important; /* leave breathing room so panels don't sit under scrollbar */
+    }
+    body.dark #savedDeals .panel {
+      box-sizing: border-box !important;
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+    /* Make saved-deal panels consistent across themes: fixed padding, flexible inner layout, and safe wrapping */
+    #savedDeals, body.dark #savedDeals, body:not(.dark) #savedDeals {
+      box-sizing: border-box !important;
+      padding-right: 8px !important;
+    }
+    #savedDeals .panel {
+      box-sizing: border-box !important;
+      width: 100% !important;
+      padding: 0.75rem !important; /* consistent interior spacing */
+      display: flex !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+    }
+    /* Ensure the main content column can shrink so text wraps instead of overflowing */
+    #savedDeals .panel > .flex { width: 100% !important; }
+    #savedDeals .panel > .flex > div:first-child { flex: 1 1 auto !important; min-width: 0 !important; }
+    /* Allow the title and small text to wrap safely */
+    #savedDeals .panel .font-medium,
+    #savedDeals .panel .small {
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+    /* Prevent wrapping: keep title and meta to a single line with ellipsis; reduce size slightly */
+    #savedDeals .panel .font-medium {
+      font-size: 0.95rem !important;
+      line-height: 1.1 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    #savedDeals .panel .small {
+      font-size: 0.85rem !important;
+      line-height: 1.1 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      opacity: 0.9 !important;
+    }
+
+    /* Ensure action buttons sit on their own row and align right */
+    #savedDeals .panel .actions {
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 0.5rem !important;
+      width: 100% !important;
+      margin-top: 0.5rem !important;
+    }
+
+    /* Since buttons moved below, allow the main text to use full width */
+    #savedDeals .panel > .flex { width: 100% !important; }
+    #savedDeals .panel > .flex > div:first-child { flex: 1 1 auto !important; min-width: 0 !important; }
+*** End Patch
+    /* Keep the action column (buttons) compact */
+    #savedDeals .panel .flex.flex-col { flex: 0 0 auto !important; }
+    /* Dark mode override: use a soft white divider for contrast */
+    body.dark #savedDeals > .p-3.panel + .p-3.panel {
+      border-top: 1px solid rgb(242, 236, 236) !important;
+    }
+
+    /* Dark mode header container styling - keep same blue as light mode */
+    .dark .header-container {
+      background: #003893; /* Same blue background as light mode */
+      border-bottom: 1px solid rgb(242, 236, 236);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.3); /* Dramatic layered shadow for pop-out effect */
+      border-radius: 12px;
+    }
+
+    /* ===== UTILITY CLASSES ===== */
+    .small{
+      font-size:1rem;
+      color:var(--muted);
+    }
+
+    .muted{
+      color:var(--muted);
+    }
+
+    /* Align $ sign vertically center in input */
+    .relative .muted {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 1.1rem;
+      color: var(--muted);
+    }
+
+    /* ===== TOOLTIP STYLES ===== */
+    #loanStructureOptionTooltip {
+      display: none;
+      position: fixed;
+      background: #222 !important;
+      color: #fff !important;
+      border: 1px solid #fff !important;
+      border-radius: 6px !important;
+      font-size: 0.75rem !important;
+      font-weight: 400 !important;
+      font-family: Inter, system-ui, Segoe UI, Roboto, sans-serif !important;
+      padding: 4px 10px !important;
+      z-index: 9999 !important;
+      white-space: pre-line !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+      pointer-events: none !important;
+      transition: opacity 0.1s !important;
+      line-height: 1.35 !important;
+      letter-spacing: 0.01em !important;
+      text-align: left !important;
+    }
+
+    /* === END OF CSS === */
+    }
+  </style>
+
+  <!-- FINAL CSS OVERRIDE - loads after Tailwind -->
+  <style>
+    /* NUCLEAR CSS FIX - Maximum specificity to override everything */
+    html body:not(.dark) .custom-input,
+    html body:not(.dark) input.custom-input,
+    html body:not(.dark) select.custom-input,
+    html body:not(.dark) .panel .custom-input,
+    html body:not(.dark) .panel input.custom-input,
+    html body:not(.dark) .panel select.custom-input,
+    html body:not(.dark) #calculator .custom-input,
+    html body:not(.dark) #calculator input.custom-input,
+    html body:not(.dark) #calculator select.custom-input {
+      background-color: #f9fafb !important;
+      color: #6b7280 !important;
+      border-color: #003893 !important;
+    }
+    
+    html body.dark .custom-input,
+    html body.dark input.custom-input,
+    html body.dark select.custom-input,
+    html body.dark .panel .custom-input,
+    html body.dark .panel input.custom-input,
+    html body.dark .panel select.custom-input,
+    html body.dark #calculator .custom-input,
+    html body.dark #calculator input.custom-input,
+    html body.dark #calculator select.custom-input {
+      background-color: rgb(31 41 55) !important;
+      color: rgb(209 213 219) !important;
+      border-color: rgb(75 85 99) !important;
+    }
+    
+    /* NUCLEAR CHECKBOX LABEL FIX */
+    html body:not(.dark) label[for="lenderCoversClosing"],
+    html body:not(.dark) .lender-label,
+    html body:not(.dark) div:contains("Lender covers closing"),
+    html body:not(.dark) *:contains("Lender covers closing") {
+      color: #000000 !important;
+      font-weight: bold !important;
+    }
+    
+    html body.dark label[for="lenderCoversClosing"],
+    html body.dark .lender-label,
+    html body.dark div:contains("Lender covers closing"),
+    html body.dark *:contains("Lender covers closing") {
+      color: #ffffff !important;
+      font-weight: bold !important;
+    }
+  </style>
+
+  <!-- NUCLEAR JAVASCRIPT FIX FOR CHECKBOX LABEL -->
+  <script>
+    function forceCheckboxLabelColor() {
+      const isDark = document.body.classList.contains('dark');
+      const color = isDark ? '#ffffff' : '#000000';
+      
+      // Find all possible checkbox label elements
+      const selectors = [
+        'label[for="lenderCoversClosing"]',
+        '.lender-label',
+        '*:contains("Lender covers closing")',
+        '*:contains("lender covers")',
+        'div:contains("Lender covers")'
+      ];
+      
+      selectors.forEach(selector => {
+        try {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(el => {
+            if (el.textContent.toLowerCase().includes('lender covers')) {
+              el.style.setProperty('color', color, 'important');
+              el.style.setProperty('font-weight', 'bold', 'important');
+            }
+          });
+        } catch(e) {
+          // Skip invalid selectors
+        }
+      });
+      
+      // Direct text content search
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.textContent && el.textContent.toLowerCase().includes('lender covers closing') && el.children.length === 0) {
+          el.style.setProperty('color', color, 'important');
+          el.style.setProperty('font-weight', 'bold', 'important');
+        }
+      });
+    }
+    
+    // Run every second to enforce the color
+    setInterval(forceCheckboxLabelColor, 1000);
+    
+    // Run immediately
+    setTimeout(forceCheckboxLabelColor, 100);
+  </script>
+
+</head>
+<body class="dark">
+  <!-- Header/Title Panel: Contains company logo, title, navigation, and theme toggle -->
+<body class="dark">
+  <!-- SheetJS (xlsx) CDN for real Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Header/Title Panel: Contains company logo, title, navigation, and theme toggle -->
+  <header class="topbar">
+    <!-- Header container: max-width:1160px to match main content width exactly, padding:0, height:96px (h-24), border-radius:12px -->
+    <div class="header-container">
+      <div class="flex items-center justify-between h-24 px-5">
+        <div class="flex items-center gap-4" style="margin-left: 20px !important;">
+          <!-- Company Logo: House icon dimensions 96px x 96px (increased by 1/3), margin-left:20px for alignment -->
+          <svg class="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke-width="1.6" style="width: 48px !important; height: 48px !important; max-width: 48px; max-height: 48px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>
+          </svg>
+          <div>
+            <div class="text-lg font-semibold">Anuks Home Solutions LLC</div>
+            <div class="small muted">Flipping Calculator</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <nav class="hidden md:flex items-center gap-2">
+            <button data-target="calculator" class="nav-btn small btn-ghost px-3 py-2 rounded-lg">Calculator</button>
+            <button data-target="compare" class="nav-btn small btn-ghost px-3 py-2 rounded-lg">Compare</button>
+            <button data-target="saved" class="nav-btn small btn-ghost px-3 py-2 rounded-lg">Saved Deals</button>
+          </nav>
+
+    <!-- Light/Dark Mode Toggle Button: margin-right:20px for alignment with logo -->
+    <button id="themeToggle" title="Toggle light/dark" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm" style="margin-right: 20px !important;">☀️</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content area: max-width:1200px, padding:20px sides (px-5), 40px bottom (pb-10), 96px top for header -->
+  <main class="content px-5 pb-10">
+    <!-- Quick offers panel: padding:20px (p-5), border-radius:12px, consistent spacing with main grid -->
+  <section class="panel p-5 main-grid-spacing">
+      <div>
+        <h3 class="text-lg font-semibold" title="The offers represent the maximum amount you could offer on a property while maintaining your desired profit margin after accounting for all costs.">QUICK OFFERS</h3>
+        <!-- Updated: Only comma-separated margins are used for quick offers. Removed reference to 'top input'. -->
+        <div class="flex items-center justify-between mt-1">
+          <p class="small muted">Enter comma-separated margins to calculate 3 quick offers.</p> <!--comma-separated margins are used for the Quick Offers section, which calculates offers based on margin percentages. -->
+          <div class="flex items-center gap-3">
+            <input id="margins" class="custom-input pl-8" placeholder="20,25,30" style="width:140px" />
+            <button class="px-2 py-1 rounded-lg btn-ghost text-sm" title="Quick offers = ARV × (1 − Margin%) − (Rehab + Contingency + Closing + Holding + Misc)">?</button>
+            <button id="applyMargins" class="px-3 py-2 rounded-lg btn-accent text-sm">Apply</button>
+            <button id="showInputs" class="px-3 py-2 rounded-lg btn-ghost text-sm" title="Scroll down to view and access the calculator input fields">Toggle Inputs</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="offersRow" class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-5"></div>
+    </section>
+
+    <!-- Main grid: keep arrangement exactly as-is -->
+  <div class="grid grid-cols-3 gap-1 flex-equal-panels main-grid-spacing">
+      <!-- Deal Information: 1/3 width -->
+  <div class="space-y-2 flex-equal-panel-left">
+        <div class="panel p-5" style="min-height: 500px;">
+          <h4 class="font-semibold">DEAL INFORMATION</h4>
+          <p class="small muted">Name required to save.</p>
+          <div class="space-y-3 p-2">
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+              <input id="dealName" class="w-full p-3 border border-gray-300 rounded-lg mt-1 bg-white text-gray-900 placeholder-gray-400 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:border-gray-600" placeholder="123 Main St Flip" title="Deal name or address" />
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">City, State, Zip Code</label>
+              <input id="dealAddress" class="w-full p-3 border border-gray-300 rounded-lg mt-1 bg-white text-gray-900 placeholder-gray-400 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:border-gray-600" placeholder="Houston, Texas 77002" title="City, State, Zip Code" />
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+              <input id="dealNotes" class="w-full p-3 border border-gray-300 rounded-lg mt-1 bg-white text-gray-900 placeholder-gray-400 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:border-gray-600" placeholder="Notes..." title="Deal notes" />
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button id="saveDeal" class="w-full bg-green-600 text-white p-3 rounded-lg">Save Deal</button>
+              <button id="resetInputs" class="flex-1 btn-accent px-3 py-2 rounded-lg" title="Clear all input fields and reset calculator to default values">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel p-5">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold">SAVED DEALS</h4>
+            <button id="exportAll" class="btn-accent px-3 py-2 rounded-lg text-sm" title="Export all saved deals as an Excel-compatible Excel file (.xlsr) with comprehensive financial analysis">Export Report</button>
+          </div>
+          <div id="savedDeals" class="mt-4 space-y-3 max-h-64 overflow-auto small muted">No saved deals</div>
+        </div>
+      </div>
+      <!-- Inputs and all right-side panels: 2/3 width -->
+  <div class="col-span-2 flex flex-col gap-2">
+        <div id="calculator" class="panel p-6" style="min-height: 500px;">
+          <!-- Calculator inputs panel: padding:24px (p-6), min-height:500px, grid-cols-4 for 4-column layout -->
+          <div class="mb-2">
+            <h4 class="font-semibold">INPUTS</h4>
+          </div>
+          <!-- Input grid: standard design -->
+          <div class="mt-4 grid grid-cols-4 gap-4">
+            <!-- Each input-group below is one input field -->
+            <div>
+              <div class="small muted" title="Expected value of the property after all repairs and improvements">After Repair Value</div>
+              <input name="arv" data-type="currency" placeholder="$ 350,000" class="custom-input mt-1" title="After Repair Value" />
+            </div>
+            <div>
+              <div class="small muted" title="Price you plan to pay for the property">Purchase Price</div>
+              <input name="purchasePrice" data-type="currency" placeholder="$ 200,000" class="custom-input mt-1" title="Purchase Price" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated cost to repair and renovate the property">Rehab Budget</div>
+              <input name="rehabBudget" data-type="currency" placeholder="$ 50,000" class="custom-input mt-1" title="Rehab Budget" />
+            </div>
+            <div>
+              <div class="small muted" title="Extra percentage added to rehab budget for unexpected costs">Contingency</div>
+              <input name="contingency" data-type="percent" placeholder="10.00 %" class="custom-input mt-1" title="Contingency" />
+            </div>
+
+            <div>
+              <div class="small muted" title="Maximum loan amount as a percent of ARV">Loan to Value</div>
+              <input name="ltv" data-type="percent" placeholder="70.00 %" class="custom-input mt-1" title="Loan to Value" />
+            </div>
+
+            <div>
+              <div class="small muted" title="All fees and costs associated with purchasing the property">Closing Costs</div>
+              <input name="closingCosts" data-type="currency" placeholder="$ 5,000" class="custom-input mt-1" title="Closing Costs" />
+            </div>
+
+            <div>
+              <div class="small muted" title="Estimated costs to hold the property during rehab (utilities, insurance, etc.)">Holding Costs</div>
+              <input name="holdingCosts" data-type="currency" placeholder="$ 8,000" class="custom-input mt-1" title="Holding Costs" />
+            </div>
+
+            <div>
+              <div class="small muted" title="Percent of ARV expected to pay in sales commissions and fees">Sales Costs</div>
+              <input name="salesCosts" data-type="percent" placeholder="6.00 %" class="custom-input mt-1" title="Sales Costs" />
+            </div>
+
+            <div>
+              <label class="small muted" title="Annual interest rate for the loan">Interest Rate</label>
+              <div class="mt-9 relative">
+                <input name="interestRate" data-type="percent" placeholder="12.00 %" class="custom-input input-right" title="Interest Rate" />
+              </div>
+            </div>
+
+            <!-- NEW: Miscellaneous Costs BEFORE Points (%) -->
+            <div>
+              <label class="small muted" title="Other costs not included above (inspections, permits, etc.)">Misc. Costs</label>
+              <div class="mt-2 relative">
+                <input name="miscCosts" data-type="currency" placeholder="$ 2,000" class="custom-input pl-8" title="Miscellaneous Costs" />
+              </div>
+            </div>
+
+            <div>
+              <label class="small muted" title="Points charged by lender, as a percent of the loan amount">Points</label>
+              <div class="mt-9 relative">
+                <input name="points" data-type="percent" placeholder="3.00 %" class="custom-input input-right" title="Points" />
+              </div>
+            </div>
+
+            <div>
+              <label class="small muted" title="Length of the loan in months">Loan Term (MTH)</label>
+              <div class="mt-2">
+                <input name="loanTerm" data-type="Number" placeholder="12" class="custom-input" title="Loan Term (Months)" />
+              </div>
+            </div>
+
+            <!--usedis this an estimted profit margin to determine the purchase price needed to achieve a specific profit goal.-->
+            <div>
+              <label class="small muted" title="Your target profit for the deal">Desired Profit</label>
+              <div class="mt-1 relative">
+                <input name="desiredProfit" data-type="currency" placeholder="$ 30000" class="custom-input pl-8" title="Desired Profit" />
+              </div>
+            </div>
+
+            <!-- Loan Structure (column 3) -->
+            <div class="small muted input-group grid-panel-cell">
+              <label title="Type of loan repayment schedule">Loan Structure</label>
+              <div style="position:relative;">
+                <select name="loanStructure" id="loanStructureSelect" class="custom-input mt-1" title="Loan Structure" aria-label="Loan Structure">
+                  <option value="Amortizing">Amortizing</option>
+                  <option value="Interest-Only">Interest-Only</option>
+                  <option value="Balloon">Balloon</option>
+                </select>
+              </div>
+            </div>
+
+              <!-- did not change at all. closing costs? (force extreme right, always last column) -->
+              <!--
+                Placement: This div positions the 'Lender covers closing costs?' label and checkbox
+                at the bottom right of the input grid, aligned with the last column.
+                It is intentionally placed here to keep the checkbox visually grouped with the other inputs
+                but separated as a distinct option for clarity and UX.
+              -->
+               <div class="col-start-4 mt-6 lender-align" style="display: flex !important;">
+                <label for="lenderCoversClosing" class="small muted mb-1 max-[480px]:mb-0 lender-label" title="If checked, closing costs are included in the initial loan amount. If unchecked, borrower pays closing costs out of pocket;">Lender covers closing costs?</label>
+                <input type="checkbox" id="lenderCoversClosing" name="lenderCoversClosing" class="lender-checkbox" />
+              </div>
+          </div>
+        </div>
+
+
+        <!-- Key Metrics panel -->
+        <div class="panel p-6">
+          <h4 class="font-semibold">KEY METRICS</h4>
+          <div class="mt-4 grid grid-cols-4 gap-4">
+            <div>
+              <div class="small muted" title="Maximum loan amount is the maximum amount the lender will loan based on your loan-to-value ratio">Maximum Loan per LTV</div>
+              <input id="maximumLoan" class="custom-input mt-1" disabled title="Maximum Loan per LTV" aria-label="Maximum Loan per LTV" />
+            </div>
+            <div>
+              <div class="small muted" title="Initial loan amount represents the maximum amount you should pay for a property to achieve your desired profit margin, accounting for all costs and expenses.">Initial Loan Amount</div>
+              <input id="initialLoan" class="custom-input mt-1" disabled title="Initial Loan Amount" aria-label="Initial Loan Amount" />
+            </div>
+            <div>
+              <div class="small muted" title="Total project cost is the sum of all major expenses required to complete the project">Total Project Cost</div>
+              <input id="totalProjectCost" class="custom-input mt-8" disabled title="Total Project Cost" aria-label="Total Project Cost" />
+            </div>
+            <div>
+              <div class="small muted" title="Ideal purchase price is the maximum price you could pay for a property and still achieve your desired profit">Ideal Purchase Price</div>
+              <input id="idealPurchase" class="custom-input mt-1" disabled title="Ideal Purchase Price" aria-label="Ideal Purchase Price" />
+            </div>
+            <div>
+              <div class="small muted" title="Amount of rehab costs not covered by the lender">Rehab not Funded by Lender</div>
+              <input id="rehabNotFunded" class="custom-input mt-1" disabled title="Rehab Not Funded" aria-label="Rehab Not Funded" />
+            </div>
+            <div>
+              <div class="small muted" title="Amount of rehab costs covered by the lender">Rehab Draw (Funded)</div>
+              <input id="rehabDraw" class="custom-input mt-1" disabled title="Rehab Draw" aria-label="Rehab Draw" />
+            </div>
+            <div>
+              <div class="small muted" title="Total loan amount is the actual amount you borrow at closing, used for all loan-related calculations">Total Loan Amount (&lt; ARV)</div>
+              <input id="totalLoanAmount" class="custom-input mt-1" disabled title="Total Loan Amount" aria-label="Total Loan Amount" />
+            </div>
+            <div>
+              <div class="small muted" title="Maximum allowable offer accounting for rehab, closing, holding, misc, sales costs and desired profit">Maximum Allowable Offer</div>
+              <input id="mao" class="custom-input mt-1" disabled title="Maximum Allowable Offer" aria-label="Maximum Allowable Offer" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Estimates panel -->
+        <div class="panel p-6">
+          <h4 class="font-semibold">ESTIMATES</h4>
+          <div class="mt-3 grid grid-cols-4 gap-4">
+            <div>
+              <div class="small muted" title="Estimated rehab costs not funded by the lender">Est. Rehab not funded</div>
+              <input id="cashToFundRehab" class="custom-input mt-1" disabled title="Cash to Fund Rehab" aria-label="Cash to Fund Rehab" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated cash the borrower needs to bring to closing">Est. Borrower Cash Due at Closing</div>
+              <input id="borrowerCash" class="custom-input mt-1" disabled title="Borrower Cash" aria-label="Borrower Cash" /> 
+            </div>
+            <div>
+              <div class="small muted" title="Estimated monthly payment based on the loan terms">Est. Monthly Payment</div>
+              <input id="monthlyPayment" class="custom-input mt-1" disabled title="Monthly Payment" aria-label="Monthly Payment" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated liquidity required for the project">Est. Liquidity Required</div>
+              <input id="liquidity" class="custom-input mt-1" disabled title="Liquidity" aria-label="Liquidity" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Profitability Analysis panel -->
+        <div class="panel p-6">
+          <h4 class="font-semibold">PROFITABILITY ANALYSIS</h4>
+          <div class="mt-3 grid grid-cols-4 gap-4">
+            <div>
+              <div class="small muted" title="Estimated net resale cost after repairs and selling expenses">Net Resale Cost</div>
+              <input id="netResale" class="custom-input mt-9" disabled title="Net Resale" aria-label="Net Resale" />            
+            </div>      
+            <div>
+              <div class="small muted" title="Estimated net profit from the sale">Net from Sale</div>
+              <input id="profit_netFromSale" class="custom-input mt-9" disabled title="Net From Sale" aria-label="Net From Sale" />
+            </div>
+            <div>
+              <div class="small muted" title="Total loan repayment amount">Total Loan Repayment</div>
+              <input id="profit_totalLoanRepayment" class="custom-input mt-2" disabled title="Total Loan Repayment" aria-label="Total Loan Repayment" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated net proceeds from the sale">Net Proceeds</div>
+              <input id="profit_netProceeds" class="custom-input mt-9" disabled title="Net Proceeds" aria-label="Net Proceeds" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated out of pocket costs">Out of Pocket Costs</div>
+              <input id="profit_outOfPocket" class="custom-input mt-2" disabled title="Out of Pocket" aria-label="Out of Pocket" />
+            </div>
+            <div>
+              <div class="small muted" title="Estimated net profit from the sale">Net Profit</div>
+              <input id="profit_netProfit" class="custom-input mt-9" disabled title="Net Profit" aria-label="Net Profit" />
+            </div>
+            <div>
+              <div class="small muted" title="Return on investment percentage">Return on Investment</div>
+              <input id="profit_roi" class="custom-input mt-2" disabled title="Return on Investment" aria-label="Return on Investment" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Purchase Price to make Desired Profit panel -->
+        <div class="panel p-6">
+          <h4 class="font-semibold">PURCHASE PRICE TO MAKE DESIRED PROFIT</h4>
+          <div class="mt-2">
+            <div class="small muted mb-1">Calculated value:</div>
+            <div id="purchaseForDesired" class="text-lg font-semibold">—</div>
+          </div>
+        </div>
+
+  <!-- Charts panel -->
+  <div id="comparePanel" class="panel p-6" style="background: var(--panel) !important; border: 1px solid #6b7280 !important; border-radius: 12px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;">
+          <h4 class="font-semibold mb-3">COMPARE CHART & LIST</h4>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="panel p-3" style="display: flex; flex-direction: column; height: 310px;">
+              <div id="compareList" class="space-y-2 small muted flex-1 overflow-auto"></div>
+              <div class="mt-2 flex gap-2">
+                <button id="refreshChart" class="btn-accent px-3 py-2 rounded-lg flex-1">Refresh Chart</button>
+                <button id="clearCompare" class="btn-ghost px-3 py-2 rounded-lg">Clear</button>
+              </div>
+            </div>
+            <div class="lg:col-span-2 panel p-3" style="height: 310px; display: flex; align-items: center; justify-content: center;">
+              <!-- Chart canvas: height:260px, width:100%, border-radius:8px, grid column span 2 on large screens -->
+              <canvas id="compareChart" style="height:260px; width:100%; max-width: 100%;"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /grid -->
+  </main>
+
+  <script>
+  (function(){
+  // --- Persistent color distinction for calculated fields ---
+  function updateCalcFieldColors() {
+    // List of calculated field IDs
+    const calcFields = [
+      'maximumLoan', 'initialLoan', 'totalProjectCost', 'rehabNotFunded', 'rehabDraw',
+      'totalLoanRepayment', 'netProceedsAfterLoan', 'outOfPocket', 'netProfit', 'roi',
+      'monthlyPayment', 'mao', 'idealPurchase', 'purchaseForDesired',
+      // Quick Offers (inputs inside offersRow)
+    ];
+    calcFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const val = (el.value !== undefined) ? el.value : el.textContent;
+      // Consider empty, zero, or placeholder as dim
+      const isDim = !val || val.trim() === '' || val === '—' || val === '$0.00' || val === '$0' || val === '0.00%' || val === '0' || val === 'N/A';
+      if (isDim) {
+        el.style.color = '#a3a3a3'; // Dim color
+        el.classList.add('dim-calc');
+        el.classList.remove('active-calc');
+      } else {
+        el.style.color = '#fff'; // Active color
+        el.classList.remove('dim-calc');
+        el.classList.add('active-calc');
+      }
+    });
+    // Quick Offers: check all .custom-input in #offersRow
+    document.querySelectorAll('#offersRow .custom-input').forEach(el => {
+      const val = el.value;
+      const isDim = !val || val.trim() === '' || val === '$0.00' || val === '$0' || val === '0';
+      if (isDim) {
+        el.style.color = '#a3a3a3';
+        el.classList.add('dim-calc');
+        el.classList.remove('active-calc');
+      } else {
+        el.style.color = '#fff';
+        el.classList.remove('dim-calc');
+        el.classList.add('active-calc');
+      }
+    });
+  }
+
+  // Call on calculation and page load
+  document.addEventListener('DOMContentLoaded', updateCalcFieldColors);
+  window.addEventListener('load', updateCalcFieldColors);
+  // Also call after calculations
+  const origCalculateAll = window.calculateAll;
+  window.calculateAll = function() {
+    if (typeof origCalculateAll === 'function') origCalculateAll.apply(this, arguments);
+    updateCalcFieldColors();
+  };
+    /*
+      =================================================================
+      HOUSE FLIPPING CALCULATOR - MAIN APPLICATION SCRIPT
+      =================================================================
+      
+      OVERVIEW / QUICK REFERENCE (added comments for easier reading)
+      -----------------------------------------------------------
+      This IIFE (Immediately Invoked Function Expression) contains the main UI wiring, 
+      utilities, formatting helpers, calculation engine, saving/loading deals, and chart rendering.
+
+      Major sections (in order):
+        - Refresh / placeholder helpers (refreshInputsToPlaceholders)
+        - Utilities ($, $all, formatters, parseNum, normalizeText, escapeHtml)
+        - DOM element references (elems object)
+        - State & storage keys (STORAGE, SETTINGS)
+        - Quick Offers rendering (renderOffers, computeIncludedCosts)
+        - Input formatting and keyboard navigation (setupFormatting)
+        - Calculation core (calculateAll)
+        - Profit simulation used by the desired-profit solver (simulateProfit)
+        - Collecting inputs and persistence (collectInputs, loadDeals, saveDealObj, deleteDeal)
+        - Saved-deals preview rendering (renderSavedPreview)
+        - Compare chart list and Chart.js rendering (renderCompareList, refreshChart)
+        - Event wiring and initialization (setup event listeners and init())
+
+      Notes:
+        - All numeric inputs are parsed by parseNum which strips non-numeric characters.
+        - Inputs use data-type attributes: "currency", "percent", "Number" etc.
+        - Most UI updates format numbers with fmtCurrency for display.
+        - LocalStorage key used: hf_saved_deals_v5 (STORAGE)
+        - SessionStorage key used for UI settings: hf_settings_v5 (SETTINGS)
+
+      Editing guidance:
+        - To change calculation logic, edit calculateAll() and simulateProfit().
+        - To change how saved deals are stored, update saveDealObj/loadDeals.
+        - UI formatting and keyboard behavior live in setupFormatting().
+    */
+
+    /*
+      =================================================================
+      REFRESH UTILITY FUNCTION
+      =================================================================
+    */
+
+    /**
+     * Function: refreshInputsToPlaceholders
+     * Purpose: Clears all input values so placeholders are visible, then recalculates
+     * 
+     * What it does:
+     * 1. Clears all input[name] and select[name] elements
+     * 2. Resets lender covers closing costs checkbox to default (unchecked)
+     * 3. Triggers a full recalculation to update all derived fields
+     * 4. Does NOT trigger blur events to preserve placeholder visibility
+     */
+    function refreshInputsToPlaceholders() {
+      // Clear all named input fields
+      $all('input[name]').forEach(input => {
+        input.value = '';
+        // Do NOT trigger blur, so no formatting is applied and placeholder remains
+      });
+      
+      // Reset all select dropdowns to first option
+      $all('select[name]').forEach(select => {
+        select.selectedIndex = 0;
+      });
+      
+      // Reset lender covers closing costs to default (unchecked)
+      var lenderCovers = document.getElementById('lenderCoversClosing');
+      if (lenderCovers) lenderCovers.checked = false;
+      
+      // Recalculate with cleared inputs
+      calculateAll();
+    }
+
+    /*
+      =================================================================
+      CORE UTILITY FUNCTIONS
+      =================================================================
+    */
+
+    /**
+     * DOM Selection Utilities
+     * $ - Select single element (querySelector wrapper)
+     * $all - Select multiple elements as Array (querySelectorAll wrapper)
+     */
+    const $ = s=>document.querySelector(s);
+    const $all = s=>Array.from(document.querySelectorAll(s));
+    
+    /**
+     * Number Formatting Functions
+     * These functions handle the display and parsing of financial data
+     */
+    
+    // fmtCurrency: Formats numbers as currency with $ prefix and commas
+    // Example: fmtCurrency(250000) returns "$ 250,000.00"
+    const fmtCurrency = v => new Intl.NumberFormat('en-US',{
+      style:'currency',
+      currency:'USD',
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }).format(Number(v)||0).replace('$', '$ ');
+    
+    // fmtNumber: Formats numbers with commas and 2 decimal places (no currency symbol)
+    // Example: fmtNumber(1234.5) returns "1,234.50"
+    const fmtNumber = v => new Intl.NumberFormat('en-US',{
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }).format(Number(v)||0);
+    
+    // parseNum: Extracts numeric value from formatted strings (removes commas, symbols, etc.)
+    // Example: parseNum("$ 250,000.00") returns 250000
+    // Example: parseNum("25.5 %") returns 25.5
+    const parseNum = v => { 
+      if(v==null) return 0; 
+      return Number(String(v).replace(/,/g,'').replace(/[^\d.-]/g,'')) || 0; 
+    };
+
+    /*
+      =================================================================
+      TEXT AND DATA PROCESSING UTILITIES
+      =================================================================
+    */
+
+    /**
+     * Function: normalizeText
+     * Purpose: Standardizes text for reliable string comparisons
+     * 
+     * Processing steps:
+     * 1. Collapses multiple spaces into single spaces
+     * 2. Trims leading/trailing whitespace  
+     * 3. Converts to lowercase
+     * 4. Removes all punctuation characters
+     * 
+     * Used for: Comparing deal addresses/names to detect duplicates
+     */
+    function normalizeText(s){
+      return String(s || '')
+        .replace(/\s+/g,' ')           // Collapse multiple spaces
+        .trim()                        // Remove leading/trailing spaces
+        .toLowerCase()                 // Convert to lowercase
+        .replace(/[^\w\s]/g,'');      // Remove punctuation
+    }
+
+    /**
+     * Function: getCityPart
+     * Purpose: Extracts city name from "City, State, Zip" format
+     * 
+     * Input: "Houston, Texas 77002"
+     * Output: "Houston"
+     * 
+     * Used for: Comparing city portions when checking for duplicate deals
+     */
+    function getCityPart(addressField){
+      if(!addressField) return '';
+      return String(addressField).split(',')[0].trim();
+    }
+
+    /**
+     * Function: escapeHtml
+     * Purpose: Prevents XSS attacks by escaping HTML characters
+     * 
+     * Escapes: < becomes &lt;, > becomes &gt;
+     * Used when: Displaying user-entered text in HTML content
+     */
+    function escapeHtml(s){ 
+      return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+    }
+
+    /*
+      =================================================================
+      MODAL AND USER INTERFACE COMPONENTS
+      =================================================================
+    */
+
+    /**
+     * Function: showOverwriteModal
+     * Purpose: Creates a custom confirmation modal for overwrite operations
+     * 
+     * Parameters:
+     * @param {string} message - The message to display to the user
+     * @param {function} onAccept - Callback executed when user clicks "Overwrite"
+     * @param {function} onCancel - Callback executed when user clicks "Cancel" or clicks outside
+     * @param {string} title - Modal title (default: 'Duplicate saved deal')
+     * @param {string} acceptLabel - Accept button text (default: 'Overwrite') 
+     * @param {string} cancelLabel - Cancel button text (default: 'Cancel')
+     * 
+     * Features:
+     * - Prevents multiple modals by removing existing ones
+     * - Full-screen overlay with click-outside-to-cancel behavior
+     * - Keyboard accessible (focuses accept button)
+     * - Clean styling with shadow and rounded corners
+     * - Auto-cleanup after user action
+     */
+    function showOverwriteModal(message, onAccept, onCancel, title = 'Duplicate saved deal', acceptLabel = 'Overwrite', cancelLabel = 'Cancel') {
+      // Remove any existing modal to prevent multiple modals
+      const existing = document.getElementById('hf-overwrite-modal');
+      if (existing) existing.remove();
+
+      // Create full-screen overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'hf-overwrite-modal';
+      overlay.style.position = 'fixed';        // Fixed positioning for full screen coverage
+      overlay.style.inset = '0';               // Cover entire viewport (top:0, right:0, bottom:0, left:0)
+      overlay.style.background = 'rgba(0,0,0,0.45)';  // Semi-transparent dark background
+      overlay.style.display = 'flex';          // Flexbox for centering
+      overlay.style.alignItems = 'center';     // Vertical centering
+      overlay.style.justifyContent = 'center'; // Horizontal centering
+      overlay.style.zIndex = 9999;             // High z-index to appear above all content
+
+      // Create modal content box
+      const box = document.createElement('div');
+      box.style.background = '#fff';           // White background for readability
+      box.style.color = '#111';               // Dark text for contrast
+      box.style.padding = '18px';             // Internal spacing
+      box.style.borderRadius = '8px';         // Rounded corners
+      box.style.maxWidth = '480px';           // Maximum width constraint
+      box.style.width = '92%';                // Responsive width with margins
+      box.style.boxShadow = '0 8px 30px rgba(0,0,0,0.25)';  // Drop shadow for depth
+      
+      // Populate modal content with title, message, and buttons
+      box.innerHTML = `
+        <div style="margin-bottom:12px;font-weight:600">${title}</div>
+        <div style="margin-bottom:16px;white-space:normal">${escapeHtml(message)}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="hf-overwrite-cancel" style="padding:8px 12px;border-radius:6px;border:1px solid #cfcfcf;background:#fff;color:#111">${cancelLabel}</button>
+          <button id="hf-overwrite-accept" style="padding:8px 12px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-weight:600">${acceptLabel}</button>
+        </div>
+      `;
+      
+      // Prevent clicks inside the modal box from propagating to overlay (which would close the modal)
+      box.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      
+      // Add modal to page
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      // Get button references and focus accept button for accessibility
+      const acceptBtn = document.getElementById('hf-overwrite-accept');
+      const cancelBtn = document.getElementById('hf-overwrite-cancel');
+      if (acceptBtn) acceptBtn.focus();
+
+      // Cleanup function to remove modal from DOM
+      function cleanup() {
+        const el = document.getElementById('hf-overwrite-modal');
+        if (el) el.remove();
+      }
+      
+      // Wire up event handlers
+      if (acceptBtn) acceptBtn.addEventListener('click', () => { 
+        cleanup(); 
+        if (typeof onAccept === 'function') onAccept(); 
+      });
+      
+      if (cancelBtn) cancelBtn.addEventListener('click', () => { 
+        cleanup(); 
+        if (typeof onCancel === 'function') onCancel(); 
+      });
+      
+      // Allow clicking outside the modal to cancel (close modal)
+      overlay.addEventListener('click', (e) => { 
+        if (e.target === overlay) { 
+          cleanup(); 
+          if (typeof onCancel === 'function') onCancel(); 
+        } 
+      });
+    }
+
+    /**
+     * Function: showInfoModal  
+     * Purpose: Creates a save confirmation modal with Yes/No buttons
+     * 
+     * Parameters:
+     * @param {string} message - The confirmation message to display
+     * @param {function} onSave - Callback executed when user clicks "Yes" (save)
+     * @param {function} onCancel - Callback executed when user clicks "No" (don't save)
+     * @param {string} title - Modal title (default: 'Save this information')
+     * 
+     * Features:
+     * - Save confirmation dialog with Yes/No choices
+     * - Similar styling to other modals for consistency
+     * - Click-outside-to-cancel behavior
+     * - Keyboard accessible (focuses "Yes" button)
+     */
+    function showInfoModal(message, onSave, onCancel, title = 'Save this information') {
+      // Remove any existing info modal
+      const existing = document.getElementById('hf-info-modal');
+      if (existing) existing.remove();
+
+      // Create full-screen overlay (same pattern as overwrite modal)
+      const overlay = document.createElement('div');
+      overlay.id = 'hf-info-modal';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.45)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = 9999;
+      
+      // Allow all interactions - modal will handle background clicks
+      overlay.style.pointerEvents = 'auto';
+
+      // Create modal content box
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.color = '#111';
+      box.style.padding = '18px';
+      box.style.borderRadius = '8px';
+      box.style.maxWidth = '480px';
+      box.style.width = '92%';
+      box.style.boxShadow = '0 8px 30px rgba(0,0,0,0.25)';
+      box.style.pointerEvents = 'auto';  // Allow clicks on the modal box itself
+      
+      // Populate with title, message, and Yes/No buttons
+      box.innerHTML = `
+        <div style="margin-bottom:12px;font-weight:600">${title}</div>
+        <div style="margin-bottom:16px;white-space:normal">${escapeHtml(message)}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="hf-info-no" style="padding:8px 12px;border-radius:6px;border:1px solid #cfcfcf;background:#f87171;color:#fff;font-weight:600">No</button>
+          <button id="hf-info-yes" style="padding:8px 12px;border-radius:6px;border:none;background:#16a34a;color:#fff;font-weight:600">Yes</button>
+        </div>
+      `;
+      
+      // Prevent clicks inside the modal box from propagating to overlay (which would close the modal)
+      box.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      
+      // Add to page
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      // Get button references and focus "Yes" button for accessibility
+      const yesBtn = document.getElementById('hf-info-yes');
+      const noBtn = document.getElementById('hf-info-no');
+      if (yesBtn) yesBtn.focus();
+
+      // Cleanup function
+      function cleanup() { 
+        const el = document.getElementById('hf-info-modal'); 
+        if (el) el.remove(); 
+      }
+      
+      // Wire up event handlers
+      if (yesBtn) yesBtn.addEventListener('click', () => { 
+        cleanup(); 
+        if (typeof onSave === 'function') onSave(); 
+      });
+      
+      if (noBtn) noBtn.addEventListener('click', () => { 
+        cleanup(); 
+        if (typeof onCancel === 'function') onCancel(); 
+      });
+      
+      // Prevent clicks inside the modal box from closing it
+      box.addEventListener('click', (e) => { e.stopPropagation(); });
+      
+      // Modal can only be closed using the buttons - no background click to close
+    }
+
+    /**
+     * Function: showInfoOnly
+     * Purpose: Shows a simple info modal with just OK button (for validation messages)
+     * 
+     * Parameters:
+     * @param {string} message - The message to display
+     * @param {string} title - Title for the modal (default: 'Information')
+     * 
+     * This is a simplified version for displaying validation errors or info messages
+     * that don't need save/cancel choices - just an OK button to dismiss.
+     */
+    function showInfoOnly(message, title = 'Information') {
+      const existing = document.getElementById('hf-info-only-modal');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'hf-info-only-modal';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.45)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = 9999;
+
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.color = '#111';
+      box.style.padding = '18px';
+      box.style.borderRadius = '8px';
+      box.style.maxWidth = '480px';
+      box.style.width = '92%';
+      box.style.boxShadow = '0 8px 30px rgba(0,0,0,0.25)';
+      
+      box.innerHTML = `
+        <div style="margin-bottom:12px;font-weight:600;font-size:15px">${escapeHtml(title)}</div>
+        <div style="margin-bottom:18px;line-height:1.5">${escapeHtml(message)}</div>
+        <div style="display:flex;justify-content:flex-end">
+          <button id="hf-info-only-ok" style="padding:10px 16px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-weight:600;cursor:pointer">OK</button>
+        </div>
+      `;
+      
+      // Prevent clicks inside the modal box from propagating to overlay (which would close the modal)
+      box.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      const okBtn = document.getElementById('hf-info-only-ok');
+      if (okBtn) okBtn.focus();
+      
+      function cleanup() { 
+        const el = document.getElementById('hf-info-only-modal'); 
+        if (el) el.remove(); 
+      }
+      
+      if (okBtn) okBtn.addEventListener('click', cleanup);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(); });
+    }
+
+    /**
+     * Function: showInfoToast
+     * Purpose: Shows a temporary notification toast at bottom of screen
+     * 
+     * Parameters:
+     * @param {string} msg - The message to display
+     * @param {number} timeout - How long to show toast in milliseconds (default: 1200)
+     * 
+     * Features:
+     * - Appears at bottom of screen with slide-in effect
+     * - Dark background with white text for visibility
+     * - Auto-dismisses after timeout period
+     * - Multiple toasts stack vertically
+     * - Non-intrusive alternative to alert() dialogs
+     */
+    function showInfoToast(msg, timeout = 1200){
+      const id = 'hf-info-toast'; 
+      let container = document.getElementById(id);
+      
+      // Create toast container if it doesn't exist
+      if(!container){ 
+        container = document.createElement('div'); 
+        container.id = id; 
+        container.style.position = 'fixed'; 
+        container.style.bottom = '20px'; 
+        container.style.right = '20px'; 
+        container.style.zIndex = 10000; 
+        document.body.appendChild(container); 
+      }
+      
+      // Create individual toast message box
+      const box = document.createElement('div'); 
+      box.style.background='#111';                    // Dark background
+      box.style.color='#fff';                        // White text
+      box.style.padding='8px 12px';                  // Internal spacing
+      box.style.marginTop='8px';                     // Spacing between multiple toasts
+      box.style.borderRadius='8px';                  // Rounded corners
+      box.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)';  // Subtle shadow
+      box.textContent=msg;                           // Set message text
+      
+      container.appendChild(box);
+      
+      // Auto-remove toast after timeout
+      setTimeout(()=>{ if(box.parentNode) box.parentNode.removeChild(box); }, timeout);
+    }
+
+    /**
+     * Function: getPurchaseForDesiredProfit
+     * Purpose: Calculates the maximum purchase price to achieve desired profit
+     * Used by CSV export when this value wasn't stored in calculations
+     */
+    function getPurchaseForDesiredProfit(inputs) {
+      const desiredProfit = Number(inputs.desiredProfit || 0);
+      const arv = Number(inputs.arv || 0);
+      
+      if (desiredProfit <= 0 || arv <= 0) return 0;
+      
+      // Calculate total costs (excluding purchase price)
+      const rehabBudget = Number(inputs.rehabBudget || 0);
+      const contingency = Number(inputs.contingency || 0);
+      const totalRehab = rehabBudget + (rehabBudget * (contingency / 100));
+      const closingCosts = Number(inputs.closingCosts || 0);
+      const holdingCosts = Number(inputs.holdingCosts || 0);
+      const miscCosts = Number(inputs.miscCosts || 0);
+      const salesCosts = arv * (Number(inputs.salesCosts || 0) / 100);
+      
+      // Formula: ARV - Total Costs - Desired Profit = Max Purchase Price
+      const maxPurchasePrice = arv - totalRehab - closingCosts - holdingCosts - miscCosts - salesCosts - desiredProfit;
+      
+      return Math.max(0, maxPurchasePrice);
+    }
+
+    /**
+     * Function: exportDealsAsCSV
+     * Purpose: Exports all saved deals to CSV format optimized for Excel
+     * 
+     * Excel-Optimized Features:
+     * - UTF-8 BOM for proper character encoding
+     * - Quoted numeric values to prevent Excel auto-formatting
+     * - Consistent decimal formatting
+     * - Proper escaping of special characters
+     * 
+     * COMPREHENSIVE EXPORT includes:
+     * - All input values
+     * - All loan calculations and metrics
+     * - Rehab financing breakdown
+     * - Cash requirements analysis
+     * - Purchase price analysis (MAO, Ideal, Desired Profit)
+     * - Sale analysis and proceeds
+     * - Complete profitability metrics
+     */
+    function exportDealsAsCSV() {
+      const deals = loadDeals();
+      if (!deals.length) {
+        showInfoOnly('No saved deals to export', 'Export Error');
+        return;
+      }
+
+      // Define comprehensive CSV headers - ALL calculated fields and metrics
+      const headers = [
+        // BASIC INFO
+        'Deal Name', 'Address', 'Notes', 'Date Saved',
+        
+        // INPUT VALUES
+        'ARV', 'Purchase Price', 'Rehab Budget', 'Contingency %',
+        'Closing Costs', 'Holding Costs', 'Misc Costs', 'Sales Costs %',
+        'LTV %', 'Interest Rate %', 'Points %', 'Loan Term (Months)', 'Loan Structure',
+        'Desired Profit', 'Lender Covers Closing',
+        
+        // LOAN CALCULATIONS
+        'Maximum Loan Amount', 'Initial Loan Amount', 'Total Loan Repayment',
+        'Monthly Payment', 'Points Cost', 'Total Interest Paid',
+        
+        // REHAB FINANCING
+        'Total Rehab Cost', 'Rehab Draw (Funded)', 'Rehab Not Funded (Cash)',
+        
+        // CASH REQUIREMENTS  
+        'Borrower Cash at Closing', 'Total Liquidity Required', 'Total Out of Pocket',
+        
+        // PURCHASE ANALYSIS
+        'Total Project Cost', 'Maximum Allowable Offer (MAO)', 'Ideal Purchase Price',
+        'Purchase Price for Desired Profit',
+        
+        // SALE ANALYSIS
+        'Net Proceeds from Sale', 'Selling Costs Amount',
+        
+        // PROFITABILITY METRICS
+        'Net Profit', 'ROI %', 'Profit Margin %', 'Cash-on-Cash Return %'
+      ];
+
+      // Helper function to properly quote CSV values for Excel
+      const csvValue = (val) => {
+        if (val === null || val === undefined || val === '') return '';
+        const str = String(val).trim();
+        // Always quote values to prevent Excel from auto-formatting
+        return `"${str.replace(/"/g, '""')}"`;
+      };
+
+      // Helper function to format currency for Excel (force as text to prevent truncation)
+      const csvCurrency = (val) => {
+        const num = Number(val) || 0;
+        if (num === 0) return '""';
+        // Format without commas to prevent Excel confusion, but keep as quoted text
+        return `"${num.toFixed(2)}"`;
+      };
+
+      // Helper function to format percentage for Excel
+      const csvPercent = (val) => {
+        const num = Number(val) || 0;
+        if (num === 0) return '""';
+        return `"${num.toFixed(2)}"`;
+      };
+
+      // Build data array for SheetJS
+      const data = [headers];
+      deals.forEach(deal => {
+        const inputs = deal.inputs || {};
+        const calcs = deal.calculations || {};
+        const row = [
+          deal.name || '',
+          deal.address || '',
+          deal.notes || '',
+          deal.savedAt || '',
+          // INPUT VALUES
+          Number(inputs.arv) || 0,
+          Number(inputs.purchasePrice) || 0,
+          Number(inputs.rehabBudget) || 0,
+          Number(inputs.contingency) || 0,
+          Number(inputs.closingCosts) || 0,
+          Number(inputs.holdingCosts) || 0,
+          Number(inputs.miscCosts) || 0,
+          Number(inputs.salesCosts) || 0,
+          Number(inputs.ltv) || 0,
+          Number(inputs.interestRate) || 0,
+          Number(inputs.points) || 0,
+          inputs.loanTerm || '0',
+          inputs.loanStructure || 'Amortizing',
+          Number(inputs.desiredProfit) || 0,
+          inputs.lenderCoversClosing === 'on' ? 'Yes' : 'No',
+          // LOAN CALCULATIONS
+          Number(calcs.maximumLoan) || 0,
+          Number(calcs.initialLoan) || 0,
+          Number(calcs.totalLoanRepayment) || 0,
+          Number(calcs.monthlyPayment) || 0,
+          (Number(calcs.initialLoan) || 0) * (Number(inputs.points || 0) / 100),
+          (Number(calcs.totalLoanRepayment) || 0) - (Number(calcs.initialLoan) || 0),
+          // REHAB FINANCING
+          (Number(inputs.rehabBudget || 0)) + (Number(inputs.rehabBudget || 0) * (Number(inputs.contingency || 0) / 100)),
+          Number(calcs.rehabDraw) || 0,
+          Number(calcs.rehabNotFunded) || 0,
+          // CASH REQUIREMENTS
+          Number(calcs.borrowerCash) || Number(calcs.outOfPocket) || 0,
+          Number(calcs.liquidityRequired) || ((Number(calcs.borrowerCash) || 0) + Number(inputs.holdingCosts || 0)),
+          Number(calcs.outOfPocket) || 0,
+          // PURCHASE ANALYSIS
+          Number(calcs.totalProjectCost) || 0,
+          Number(calcs.mao) || 0,
+          Number(calcs.idealPurchase) || 0,
+          Number(calcs.purchaseForDesired) || getPurchaseForDesiredProfit(inputs) || 0,
+          // SALE ANALYSIS
+          Number(calcs.netFromSale) || Number(calcs.netProceedsAfterLoan) || 0,
+          Number(calcs.sellingCostsAmount) || ((Number(inputs.arv || 0)) * (Number(inputs.salesCosts || 0) / 100)),
+          // PROFITABILITY METRICS
+          Number(calcs.netProfit) || 0,
+          Number(calcs.roi) || 0,
+          (calcs.netProfit && inputs.arv ? ((calcs.netProfit / Number(inputs.arv)) * 100) : 0),
+          (calcs.netProfit && calcs.outOfPocket && calcs.outOfPocket > 0 ? ((calcs.netProfit / calcs.outOfPocket) * 100) : 0)
+        ];
+        data.push(row);
+      });
+
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Deals');
+
+      // Export workbook as .xlsx
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `house_flipping_deals_${new Date().toISOString().slice(0,10)}.xlsx`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showInfoToast(`Excel file (.xlsx) exported: ${deals.length} deals`);
+    }
+
+    /**
+     * Function: exportAllDealsAsJSON
+     * Purpose: Exports complete dataset as JSON for backup/import purposes
+     * 
+     * Features:
+     * - Complete deal data with all inputs and calculations
+     * - Formatted JSON for readability
+     * - Suitable for backup, sharing, or importing into other systems
+     */
+    function exportAllDealsAsJSON() {
+      const deals = loadDeals();
+      if (!deals.length) {
+        showInfoOnly('No saved deals to export', 'Export Error');
+        return;
+      }
+
+      const dataStr = JSON.stringify(deals, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `house_flipping_deals_backup_${new Date().toISOString().slice(0,10)}.json`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showInfoToast(`JSON backup exported: ${deals.length} deals`);
+    }
+
+    /**
+     * Function: exportDealsAsTextReport
+     * Purpose: Exports deals as a human-readable text report
+     * 
+     * Features:
+     * - Formatted text report with deal summaries
+     * - Easy to read format for printing or sharing
+     * - Includes key financial metrics for each deal
+     */
+    function exportDealsAsTextReport() {
+      const deals = loadDeals();
+      if (!deals.length) {
+        showInfoOnly('No saved deals to export', 'Export Error');
+        return;
+      }
+
+      let txt = `HOUSE FLIPPING DEALS REPORT - Generated: ${new Date().toLocaleDateString()}\n`;
+      txt += `Total Deals: ${deals.length}\n\n`;
+      txt += '='.repeat(50) + '\n\n';
+      
+      deals.forEach((d,i) => {
+        const inputs = d.inputs || {};
+        const calcs = d.calculations || {};
+        
+        txt += `DEAL ${i+1}: ${d.name || 'Untitled'}\n`;
+        txt += `Address: ${d.address || 'N/A'}\n`;
+        txt += `ARV: $${Number(inputs.arv || 0).toLocaleString()}\n`;
+        txt += `Purchase: $${Number(inputs.purchasePrice || 0).toLocaleString()}\n`;
+        txt += `Rehab: $${Number(inputs.rehabBudget || 0).toLocaleString()}\n`;
+        txt += `Net Profit: $${Number(calcs.netProfit || 0).toLocaleString()}\n`;
+        txt += `ROI: ${Number(calcs.roi || 0).toFixed(1)}%\n`;
+        txt += `Notes: ${d.notes || 'None'}\n`;
+        txt += '-'.repeat(30) + '\n\n';
+      });
+
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `house_flipping_report_${new Date().toISOString().slice(0,10)}.txt`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showInfoToast(`Text report exported: ${deals.length} deals`);
+    }
+
+    /**
+     * Function: debugSavedDeals (DEBUG HELPER)
+     * Purpose: Shows what data is actually saved in localStorage for troubleshooting
+     * 
+     * Call this function from browser console: debugSavedDeals()
+     */
+    function debugSavedDeals() {
+      const deals = loadDeals();
+      console.log('=== DEBUG: SAVED DEALS DATA ===');
+      console.log(`Total deals found: ${deals.length}`);
+      
+      if (deals.length === 0) {
+        console.log('❌ No deals saved yet. Try saving a deal first.');
+        alert('No deals found in storage. Make sure to:\n1. Fill in some property data\n2. Enter a deal name and address\n3. Click "Save Deal"');
+        return;
+      }
+      
+      deals.forEach((deal, i) => {
+        console.log(`\n--- DEAL ${i+1} ---`);
+        console.log('Name:', deal.name);
+        console.log('Address:', deal.address);
+        console.log('Inputs:', deal.inputs);
+        console.log('Calculations:', deal.calculations);
+        
+        // Check specifically for Purchase Price for Desired Profit
+        const calcs = deal.calculations || {};
+        if (calcs.purchaseForDesired) {
+          console.log('✅ Purchase Price for Desired Profit found:', calcs.purchaseForDesired);
+        } else {
+          console.log('❌ Purchase Price for Desired Profit missing from calculations');
+          
+          // Try to calculate it from inputs
+          const inputs = deal.inputs || {};
+          const fallbackValue = getPurchaseForDesiredProfit(inputs);
+          console.log('📊 Calculated fallback value:', fallbackValue);
+        }
+        
+        // Check if inputs have data
+        const inputs = deal.inputs || {};
+        const hasARV = inputs.arv && Number(inputs.arv) > 0;
+        const hasDesiredProfit = inputs.desiredProfit && Number(inputs.desiredProfit) > 0;
+        
+        if (!hasARV) console.warn('⚠️  Missing ARV data');
+        if (!hasDesiredProfit) console.warn('⚠️  Missing Desired Profit data');
+      });
+      
+      // Show user-friendly message  
+      const firstDeal = deals[0];
+      const hasData = firstDeal.inputs?.arv && Number(firstDeal.inputs.arv) > 0;
+      const hasPurchaseForDesired = firstDeal.calculations?.purchaseForDesired;
+      
+      if (hasData) {
+        const msg = hasPurchaseForDesired 
+          ? `✅ Found ${deals.length} saved deals with data including Purchase Price for Desired Profit.` 
+          : `⚠️ Found ${deals.length} saved deals with data, but Purchase Price for Desired Profit values may be missing from older saves.`;
+        alert(msg + `\n\nCheck browser console (F12) for detailed information.\n\nTry saving a new deal to ensure all values are captured!`);
+      } else {
+        alert(`❌ Found ${deals.length} saved deals but they appear to have empty data.\n\nMake sure to fill in property values (ARV, Purchase Price, etc.) before saving deals.`);
+      }
+    }
+
+    // Make debug function available globally for console access
+    window.debugSavedDeals = debugSavedDeals;
+
+    /**
+     * Function: fixExistingDeals (REPAIR HELPER)
+     * Purpose: Updates existing saved deals to include missing Purchase Price for Desired Profit values
+     * 
+     * Call this function from browser console: fixExistingDeals()
+     */
+    function fixExistingDeals() {
+      const deals = loadDeals();
+      if (!deals.length) {
+        alert('No deals found to fix.');
+        return;
+      }
+
+      let fixedCount = 0;
+      deals.forEach(deal => {
+        const calcs = deal.calculations || {};
+        const inputs = deal.inputs || {};
+        
+        // Check if missing purchaseForDesired value
+        if (!calcs.purchaseForDesired || calcs.purchaseForDesired === 0) {
+          const calculatedValue = getPurchaseForDesiredProfit(inputs);
+          if (calculatedValue > 0) {
+            calcs.purchaseForDesired = calculatedValue;
+            fixedCount++;
+          }
+        }
+        
+        // Update the deal's calculations
+        deal.calculations = calcs;
+      });
+
+      if (fixedCount > 0) {
+        // Save the updated deals back to localStorage
+        localStorage.setItem(STORAGE, JSON.stringify(deals));
+        alert(`✅ Fixed ${fixedCount} deals by adding missing Purchase Price for Desired Profit values.\n\nYour CSV export should now include all values!`);
+      } else {
+        alert(`✅ All ${deals.length} deals already have Purchase Price for Desired Profit values.\n\nNo fixes needed!`);
+      }
+    }
+
+    // Make fix function available globally for console access  
+    window.fixExistingDeals = fixExistingDeals;
+
+    /*
+      =================================================================
+      DOM ELEMENT REFERENCES AND STATE MANAGEMENT  
+      =================================================================
+    */
+
+    /**
+     * Elements Object (elems)
+     * Purpose: Centralizes DOM element references to avoid repeated queries
+     * 
+     * Why this pattern:
+     * - Performance: Query elements once, reuse references
+     * - Maintainability: Single location for all element selectors
+     * - Error prevention: Easier to spot missing elements
+     * 
+     * Categories:
+     * - Quick Offers: offersRow, margins, applyMargins
+     * - Deal Management: saveDeal, resetInputs, dealName, dealAddress, dealNotes
+     * - Saved Deals: savedDeals, exportAll
+     * - Comparison: compareList, refreshChart, clearCompare, compareChart
+     * - UI Controls: themeToggle, showInputs
+     */
+    const elems = {
+      // Quick Offers section
+      offersRow: $('#offersRow'),           // Container for quick offer cards
+      margins: $('#margins'),               // Input field for margin percentages
+      applyMargins: $('#applyMargins'),     // Button to apply margin settings
+      
+      // Deal Information and Management
+      saveDeal: $('#saveDeal'),             // Save current deal button
+      resetInputs: $('#resetInputs'),       // Reset all inputs button  
+      dealName: $('#dealName'),             // Deal name/address input
+      dealAddress: $('#dealAddress'),       // City, state, zip input
+      dealNotes: $('#dealNotes'),           // Deal notes textarea
+      savedDeals: $('#savedDeals'),         // Container for saved deals list
+      
+      // Export and Analysis
+      exportAll: $('#exportAll'),           // Export all deals report button
+      compareList: $('#compareList'),       // Container for comparison checkboxes
+      refreshChart: $('#refreshChart'),     // Refresh comparison chart button
+      clearCompare: $('#clearCompare'),     // Clear all comparisons button
+      compareChart: $('#compareChart'),     // Canvas element for Chart.js
+      
+      // UI Controls
+      themeToggle: $('#themeToggle'),       // Light/dark mode toggle button
+      showInputs: $('#showInputs')          // Scroll to inputs button
+    };
+
+    /*
+      =================================================================
+      APPLICATION STATE AND STORAGE CONFIGURATION
+      =================================================================
+    */
+
+    /**
+     * Storage Keys and Settings Management
+     * 
+     * STORAGE: LocalStorage key for persistent deal data
+     * SETTINGS: SessionStorage key for temporary UI preferences
+     * 
+     * Default settings:
+     * - quickMargins: [20,25,30] - Default margin percentages for quick offers
+     * 
+     * =================================================================
+     * LOCAL STORAGE SYSTEM DETAILS
+     * =================================================================
+     * 
+     * Storage Location: Browser's LocalStorage API
+     * - Windows: Stored in browser profile directory
+     * - Persistence: Data survives browser restarts, computer reboots
+     * - Capacity: ~5-10MB per domain (varies by browser)
+     * - Deal Capacity: Can store 2,500-5,000+ deals depending on data size
+     * 
+     * Storage Key: 'hf_saved_deals_v5'
+     * - Version suffix allows for future schema upgrades
+     * - Data Format: JSON array of deal objects
+     * - Each deal includes: inputs, calculations, metadata, timestamps
+     * 
+     * Data Persistence:
+     * - Survives browser close/reopen
+     * - Survives computer restart
+     * - Lost only when: browser data cleared, localStorage quota exceeded, manual deletion
+     * 
+     * Export Destinations (when using Export functions):
+     * - CSV files: Saved to user's Downloads folder (C:\Users\[username]\Downloads\)
+     * - JSON backups: Same Downloads folder
+     * - Text reports: Same Downloads folder
+     * - File naming: Includes timestamp (house_flipping_deals_2025-09-25.csv)
+     * 
+     * Browser Compatibility:
+     * - All modern browsers support localStorage
+     * - IE8+ supported (legacy compatibility)
+     * - Cross-browser support
+     */
+    const STORAGE = 'hf_saved_deals_v5';      // LocalStorage key for saved deals
+    const SETTINGS = 'hf_settings_v5';       // SessionStorage key for UI settings
+    
+    // Load existing settings or create defaults
+    let settings = JSON.parse(sessionStorage.getItem(SETTINGS)||'{}') || {};
+    settings.quickMargins = settings.quickMargins || [20,25,30];  // Default margin percentages
+    
+    // Initialize margins input with saved settings
+    $('#margins').value = settings.quickMargins.join(',');
+
+      // Lightweight in-page overwrite confirmation modal (accept / reject)
+    function showOverwriteModal(message, onAccept, onCancel){
+      // remove existing if present
+      const existing = document.getElementById('hf-overwrite-modal');
+      if(existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'hf-overwrite-modal';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.45)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = 9999;
+      
+      // Allow all interactions - modal will handle background clicks
+      overlay.style.pointerEvents = 'auto';
+
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.color = '#111';
+      box.style.padding = '18px';
+      box.style.borderRadius = '8px';
+      box.style.maxWidth = '480px';
+      box.style.width = '92%';
+      box.style.boxShadow = '0 8px 30px rgba(0,0,0,0.25)';
+      box.style.pointerEvents = 'auto';  // Allow clicks on the modal box itself
+      box.innerHTML = `
+        <div style="margin-bottom:12px;font-weight:600">Duplicate saved deal</div>
+        <div style="margin-bottom:16px;white-space:normal">${escapeHtml(message)}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="hf-overwrite-cancel" style="padding:8px 12px;border-radius:6px;border:1px solid #cfcfcf;background:#fff;color:#111">Cancel</button>
+          <button id="hf-overwrite-accept" style="padding:8px 12px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-weight:600">Overwrite</button>
+        </div>
+      `;
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      // focus accept for keyboard users
+      const acceptBtn = document.getElementById('hf-overwrite-accept');
+      const cancelBtn = document.getElementById('hf-overwrite-cancel');
+      if (acceptBtn) acceptBtn.focus();
+
+      // Prevent clicks inside the modal box from closing it
+      box.addEventListener('click', (e) => { e.stopPropagation(); });
+
+      function cleanup(){
+        const el = document.getElementById('hf-overwrite-modal');
+        if(el) el.remove();
+      }
+      acceptBtn.addEventListener('click', ()=>{ cleanup(); if(typeof onAccept === 'function') onAccept(); });
+      cancelBtn.addEventListener('click', ()=>{ cleanup(); if(typeof onCancel === 'function') onCancel(); });
+      // Removed click-outside-to-cancel behavior - modal can only be closed with buttons
+    }
+
+    /*
+      =================================================================
+      QUICK OFFERS FUNCTIONALITY
+      =================================================================
+    */
+
+    /**
+     * Quick Offers System
+     * Purpose: Provides instant offer calculations based on different profit margin targets
+     * 
+     * How it works:
+     * 1. User enters comma-separated margin percentages (e.g., "20,25,30")
+     * 2. System calculates maximum offer prices for each margin
+     * 3. Formula: Offer = (ARV × (1 - Margin%)) - Total Costs
+     * 
+     * Cost components included:
+     * - Rehab budget + contingency percentage
+     * - Closing costs
+     * - Holding costs  
+     * - Miscellaneous costs
+     * - Purchase price is NOT included (since we're calculating it)
+     */
+
+    /**
+     * Function: parseMargins
+     * Purpose: Converts comma-separated string to array of valid margin percentages
+     * 
+     * @param {string} csv - Comma-separated values like "20,25,30"
+     * @returns {object} Object with {valid: boolean, numbers: number[], error: string}
+     * 
+     * Example: parseMargins("20, 25, abc, 30") returns {valid: false, numbers: [20, 25, 30], error: "Too many numbers"}
+     */
+    function parseMargins(csv){ 
+      if(!csv) return {valid: true, numbers: [], error: null}; 
+      
+      const numbers = String(csv).split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+      
+      if(numbers.length > 3) {
+        return {valid: false, numbers: numbers, error: "Maximum of 3 comma-separated numbers allowed"};
+      }
+      
+      return {valid: true, numbers: numbers, error: null};
+    }
+
+    /**
+     * Function: computeIncludedCosts
+     * Purpose: Calculates total project costs EXCLUDING purchase price for quick offers
+     * 
+     * Cost components:
+     * - Total rehab = rehab budget + (rehab budget × contingency percentage)
+     * - Closing costs
+     * - Holding costs (interest, utilities, insurance, etc.)
+     * - Miscellaneous costs
+     * 
+     * @returns {number} Total cost amount to subtract from ARV-based calculations
+     */
+    function computeIncludedCosts(){
+      // Get rehab budget and contingency percentage from inputs
+      const r = parseNum($('[name="rehabBudget"]').value);
+      const contingency = parseNum($('[name="contingency"]').value) || 0;
+      
+      // Calculate rehab contingency and total rehab cost
+      const rehabCont = r * (contingency/100);         // Contingency amount (% of rehab budget)
+      const totalRehab = r + rehabCont;                // Base rehab + contingency buffer
+      
+      // Get other cost components from inputs
+      const c = parseNum($('[name="closingCosts"]').value);      // Closing costs
+      const h = parseNum($('[name="holdingCosts"]').value);      // Holding costs
+      const m = parseNum($('[name="miscCosts"]').value);        // Miscellaneous costs
+      
+      // Return sum of all included costs (excludes purchase price)
+      return totalRehab + c + h + m;
+    }
+
+    /**
+     * Function: renderOffers
+     * Purpose: Creates and displays quick offer cards based on margin percentages
+     * 
+     * Process:
+     * 1. Gets ARV (After Repair Value) from input
+     * 2. Parses margin percentages from settings/input
+     * 3. Calculates total project costs (excluding purchase)
+     * 4. For each margin: Offer = (ARV × (1-margin%)) - Total Costs
+     * 5. Creates visual cards displaying each calculated offer
+     * 
+     * Visual output: Grid of cards showing "Offer @ X%" with calculated amounts
+     */
+    function renderOffers(){
+      const arv = parseNum($('[name="arv"]').value); // Get ARV from input field
+      const marginsInput = $('#margins').value;
+      const marginResult = parseMargins(marginsInput);
+      const margins = (marginResult.valid && marginsInput.trim() !== '') ? marginResult.numbers : [];
+
+      elems.offersRow.innerHTML = '';
+
+      // Always show 3 offer cards (calculated if margins, else placeholders)
+      for (let i = 0; i < 3; i++) {
+        let card = document.createElement('div');
+        card.className = 'panel p-4';
+        if (margins.length && margins[i] !== undefined) {
+          const m = margins[i];
+          const baseCosts = computeIncludedCosts();
+          const offer = Math.max(0, (arv * (1 - m / 100)) - baseCosts);
+          card.innerHTML = `
+            <div class="small muted">Offer @ ${m}%</div>
+            <input class="custom-input w-full mt-2 text-2xl font-semibold" value="${fmtCurrency(offer)}" disabled title="Quick Offer" aria-label="Quick Offer">
+            <div class="small muted mt-2">Computed from ARV minus costs</div>`;
+        } else {
+          card.innerHTML = `
+            <div class="small muted">Offer @ --%</div>
+            <input class="custom-input w-full mt-2 text-2xl font-semibold" value="$0.00" disabled title="Quick Offer" aria-label="Quick Offer">
+            <div class="small muted mt-2">Enter margins and click Apply</div>`;
+        }
+        elems.offersRow.appendChild(card);
+      }
+      
+      // Apply spacing after all cards are created
+      if (window.innerWidth <= 480) {
+        // Simple spacing enforcement - CSS should handle the details
+        elems.offersRow.style.display = 'flex';
+        elems.offersRow.style.flexDirection = 'column';
+        
+        // Force a re-render to apply CSS changes
+        elems.offersRow.style.visibility = 'hidden';
+        elems.offersRow.offsetHeight; // Trigger reflow
+        elems.offersRow.style.visibility = 'visible';
+      }
+    }
+
+    /*
+      =================================================================
+      INPUT FORMATTING AND KEYBOARD NAVIGATION SYSTEM
+      =================================================================
+    */
+
+    /**
+     * Function: setupFormatting
+     * Purpose: Configures user-friendly input formatting and keyboard navigation
+     * 
+     * Features implemented:
+     * 1. Currency formatting (adds $ and commas as user types)
+     * 2. Percentage formatting (adds % symbol and validates range)
+     * 3. Auto-calculation on value changes (blur event)
+     * 4. Enter-key navigation between fields for rapid data entry
+     * 5. Real-time input validation and character filtering
+     * 
+     * Data type attributes supported:
+     * - data-type="currency": Formats as $X,XXX.XX, right-aligned
+     * - data-type="percent": Formats as XX.XX %, right-aligned  
+     * - data-type="number": Plain numeric formatting
+     */
+    function setupFormatting(){
+      // Apply formatting to all inputs with data-type attributes
+      $all('[data-type]').forEach(input=>{
+        const type = input.getAttribute('data-type');
+        
+        /**
+         * Focus Event Handler
+         * Purpose: Remove formatting when user starts editing for easier input
+         * 
+         * Behavior:
+         * - Currency: Remove $ and commas, show raw number
+         * - Percent: Remove % symbol, show raw number
+         * - Number: Remove any formatting, show raw number
+         */
+        input.addEventListener('focus', ()=> {
+          if(type==='percent') {
+            input.value = String(parseNum(input.value)||'');
+          } else if(type==='currency') {
+            // Always show $ at the start
+            let val = String(parseNum(input.value)||'');
+            input.value = '$' + val;
+            // Move cursor after $ if user focuses
+            setTimeout(() => {
+              if (input.setSelectionRange) input.setSelectionRange(input.value.length, input.value.length);
+            }, 0);
+          } else {
+            input.value = String(parseNum(input.value)||'');
+          }
+        });
+        
+        /**
+         * Blur Event Handler  
+         * Purpose: Apply proper formatting when user finishes editing
+         * 
+         * Behavior:
+         * - Currency: Format as $X,XXX.XX
+         * - Percent: Format as XX.XX %
+         * - Number: Format as plain number
+         * - Triggers calculation update after formatting
+         */
+        input.addEventListener('blur', ()=> {
+          if(type==='currency'){ 
+            input.value = fmtCurrency(parseNum(input.value)); 
+          }
+          else if(type==='percent'){
+            if(input.value !== '') {
+              input.value = (Number(parseNum(input.value))||0).toFixed(2) + ' %';
+            } else {
+              input.value = '';  // Keep empty if user cleared it
+            }
+          }
+          else { 
+            input.value = Number(parseNum(input.value)||0); 
+          }
+          calculateAll();  // Recalculate after formatting
+        });
+        
+        /**
+         * Input Event Handler
+         * Purpose: Filter invalid characters as user types
+         * 
+         * Allows: digits (0-9), decimal point (.), comma (,), negative sign (-)
+         * Blocks: letters, special characters, multiple decimal points
+         */
+        input.addEventListener('input', ()=> { 
+          if(type==='currency') {
+            // Remove all non-numeric except . , -
+            let val = input.value.replace(/[^\d.,-]/g,'');
+            // Always keep $ at the start
+            input.value = '$' + val;
+            // Prevent user from deleting $ or moving cursor before it
+            if (input.selectionStart <= 1) {
+              input.setSelectionRange(1,1);
+            }
+          } else {
+            input.value = input.value.replace(/[^\d.,-]/g,'');
+          }
+        });
+        
+        // Set right alignment for percentage inputs (consistent with currency)
+        if(type==='percent') {
+          input.style.textAlign = 'right';
+        }
+      });
+
+      /**
+       * Enhanced Enter-Key Navigation System
+       * Purpose: Enables rapid data entry by allowing Tab-like navigation with Enter key
+       * 
+       * Behavior:
+       * - Enter key moves focus to next input/select field
+       * - Cycles through all named form controls
+       * - Skips textareas (preserves newline functionality)
+       * - Skips checkboxes and radios (different interaction pattern)
+       * - Auto-selects text in destination field for quick replacement
+       * 
+       * Benefits:
+       * - Faster data entry for users familiar with numeric keypads
+       * - Better accessibility for keyboard-only users
+       * - Maintains focus flow through calculation inputs
+       */
+      $all('input[name], select[name], textarea[name]').forEach(ctrl => {
+        ctrl.addEventListener('keydown', function(e){
+          if(e.key !== 'Enter') return;  // Only handle Enter key
+          
+          const tag = ctrl.tagName.toLowerCase();
+          const type = ctrl.type;
+          
+          // Preserve default behavior for specific input types
+          if(tag === 'textarea') return;                    // Allow newlines in textareas
+          if(type === 'checkbox' || type === 'radio') return; // Different interaction pattern
+          
+          // Prevent form submission and move to next field
+          e.preventDefault();
+          
+          // Get list of all focusable form controls (excluding textareas, checkboxes, radios)
+          const controls = Array.from(document.querySelectorAll('input[name], select[name], textarea[name]'))
+            .filter(el => 
+              !el.disabled &&                               // Must be enabled
+              el.offsetParent !== null &&                   // Must be visible
+              el.type !== 'checkbox' &&                     // Skip checkboxes
+              el.type !== 'radio' &&                        // Skip radio buttons
+              el.tagName.toLowerCase() !== 'textarea'       // Skip textareas
+            );
+          
+          // Find current field index and move to next (with wraparound)
+          const idx = controls.indexOf(ctrl);
+          const next = controls[(idx + 1) % controls.length];
+          
+          if(next){ 
+            next.focus();                                   // Move focus to next field
+            if(next.select) next.select();                  // Select all text for quick replacement
+          }
+        });
+      });
+
+      /**
+       * Real-time Currency Formatting with Comma Insertion
+       * Purpose: Adds commas to currency fields as user types, preserving cursor position
+       * 
+       * Features:
+       * - Adds commas every 3 digits (1,000, 10,000, 100,000)
+       * - Preserves decimal places
+       * - Maintains cursor position during formatting
+       * - Only applies to fields marked with data-type="currency"
+       * 
+       * Technical details:
+       * - Saves cursor position before formatting
+       * - Applies number formatting with commas
+       * - Restores cursor position adjusted for added/removed characters
+       */
+      $all('[data-type="currency"]').forEach(input => {
+        input.addEventListener('input', function(e) {
+          const selectionStart = input.selectionStart;      // Save cursor position
+          const oldLength = input.value.length;            // Track length change
+
+          // Format the value: remove non-numeric chars, add commas
+          let val = input.value.replace(/[^\d.]/g, '');     // Keep only digits and decimal
+          if(val) {
+            let parts = val.split('.');                     // Handle decimal places
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');  // Add commas to whole number
+            input.value = parts.join('.');                 // Rejoin with decimal
+          }
+
+          // Restore cursor position, adjusted for formatting changes
+          const newLength = input.value.length;
+          input.setSelectionRange(
+            selectionStart + (newLength - oldLength), 
+            selectionStart + (newLength - oldLength)
+          );
+        });
+      });
+
+      /**
+       * Address Title Case Formatting
+       * Purpose: Automatically capitalizes first letter of each word in address field
+       * 
+       * Features:
+       * - Capitalizes first letter of each word (separated by spaces)
+       * - Maintains existing punctuation and numbers
+       * - Applies on blur (when user finishes editing)
+       * - Example: "123 main st apt 5" → "123 Main St Apt 5"
+       */
+      const dealNameInput = document.getElementById('dealName');
+      if (dealNameInput) {
+        dealNameInput.addEventListener('blur', function() {
+          const value = this.value;
+          if (value) {
+            // Convert to title case: capitalize first letter of each word
+            this.value = value.replace(/\b\w+/g, function(word) {
+              return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            });
+          }
+        });
+      }
+
+      /**
+       * City, State, Zip Code Title Case Formatting
+       * Purpose: Automatically capitalizes city and state names in the address field
+       * 
+       * Features:
+       * - Capitalizes first letter of each word (separated by spaces)
+       * - Maintains existing punctuation, numbers, and zip codes
+       * - Applies on blur (when user finishes editing)
+       * - Example: "houston, texas 77002" → "Houston, Texas 77002"
+       */
+      const dealAddressInput = document.getElementById('dealAddress');
+      if (dealAddressInput) {
+        dealAddressInput.addEventListener('blur', function() {
+          const value = this.value;
+          if (value) {
+            // Convert to title case: capitalize first letter of each word
+            this.value = value.replace(/\b\w+/g, function(word) {
+              return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            });
+          }
+        });
+      }
+    }
+
+    /*
+      =================================================================
+      CORE CALCULATION ENGINE - calculateAll()
+      =================================================================
+      
+      This is the heart of the house flipping calculator. It performs all financial
+      calculations based on user inputs and updates the UI with results.
+      
+      Main calculation categories:
+      1. INPUT COLLECTION: Gathers all user-entered values
+      2. LOAN CALCULATIONS: Determines loan amounts and structure
+      3. REHAB FINANCING: Calculates funded vs out-of-pocket rehab costs
+      4. PURCHASE METRICS: Computes MAO (Maximum Allowable Offer) and ideal purchase price  
+      5. PAYMENT CALCULATIONS: Monthly payments based on loan structure
+      6. PROFIT ANALYSIS: Net profit, ROI, cash requirements
+      7. UI UPDATES: Formats and displays all calculated values
+      8. AUXILIARY FEATURES: Desired profit solver, data storage
+    */
+    function calculateAll(){
+      /*
+        ===============================================================
+        SECTION 1: INPUT COLLECTION AND VALIDATION
+        ===============================================================
+      */
+      
+      // Helper function to safely extract numeric values from form inputs
+      const get = name => parseNum(($('[name="'+name+'"]')||{}).value);
+      
+      // Primary property values
+      const arv = get('arv');                           // After Repair Value - expected sale price
+      const purchasePrice = get('purchasePrice');       // Purchase price being analyzed
+      const rehabBudget = get('rehabBudget');           // Base rehab/renovation budget
+      
+      // Cost factors and percentages
+      const contingency = get('contingency');           // Contingency % for rehab overruns
+      const closingCosts = get('closingCosts');         // Closing costs (title, legal, etc.)
+      const holdingCosts = get('holdingCosts');         // Holding costs (utilities, insurance, etc.)
+      const miscCosts = get('miscCosts');               // Other miscellaneous costs
+      const salesCostsPct = get('salesCosts');          // Sales costs as % of ARV (agent, staging)
+      
+      // Loan parameters
+      const ltv = get('ltv');                           // Loan-to-Value ratio (max loan %)
+      const points = get('points');                     // Loan origination points %
+      const interestRate = get('interestRate');         // Annual interest rate %
+      const loanTerm = get('loanTerm');                 // Loan term in months
+      const loanStructure = ($('[name="loanStructure"]')||{}).value || 'Amortizing';  // Loan type
+      
+      // Analysis parameters
+      const desiredProfit = parseNum($('[name="desiredProfit"]').value);  // Target profit amount
+      
+      // Special options
+      const lenderCoversClosing = document.getElementById('lenderCoversClosing')?.checked;
+      
+      /*
+        ===============================================================
+        SECTION 2: REHAB AND PROJECT COST CALCULATIONS
+        ===============================================================
+      */
+      
+      // Total rehab cost including contingency buffer
+      const rehabCont = rehabBudget * (contingency/100);    // Contingency amount ($)
+      const totalRehab = rehabBudget + rehabCont;           // Total rehab including buffer
+      
+      /*
+        ===============================================================
+        SECTION 3: LOAN STRUCTURE AND FUNDING ANALYSIS
+        ===============================================================
+      */
+      
+      // Maximum loan amount based on ARV and LTV ratio
+      const maximumLoan = arv * (ltv/100);
+      
+      // Determine if closing costs are included in loan amount
+      const closingCostsForLoan = lenderCoversClosing ? closingCosts : 0;
+      
+      // Calculate how much rehab funding is available from loan
+      // Available = Max Loan - Purchase Price - Closing Costs (if covered by lender)
+      const lenderAvailForRehab = Math.max(0, maximumLoan - purchasePrice - closingCostsForLoan);
+      
+      // Determine unfunded rehab portion (must be paid out of pocket)
+      const rehabNotFunded = Math.max(0, totalRehab - lenderAvailForRehab);
+      const rehabDraw = totalRehab - rehabNotFunded;        // Portion funded by loan
+      
+      // Calculate actual initial loan amount
+      // Includes: Purchase + Closing Costs (if lender covers) + Funded Rehab
+      let initialLoan = Math.min(maximumLoan, 
+        purchasePrice + (lenderCoversClosing ? closingCosts : 0) + rehabDraw);
+      
+      // Calculate loan origination points cost
+      const pointsCost = initialLoan * (points/100);
+      
+      // Total project cost (all money needed for complete project)
+      const totalProjectCost = purchasePrice + totalRehab + closingCosts + pointsCost + miscCosts;
+      
+      /*
+        ===============================================================
+        SECTION 4: PURCHASE PRICE ANALYSIS METRICS  
+        ===============================================================
+      */
+      
+      // Calculate selling costs in dollar amount
+      const sellingCostsAmount = arv * (salesCostsPct/100);
+      
+      // MAO (Maximum Allowable Offer) - highest price to pay and still be profitable
+      // Formula: Max Loan - All Costs - Desired Profit
+      const mao = maximumLoan - totalRehab - closingCosts - holdingCosts - miscCosts - sellingCostsAmount - desiredProfit;
+      
+      // Ideal Purchase Price - maximum price for desired profit margin
+      // Formula: ARV - All Costs - Desired Profit  
+      const idealPurchase = arv - totalRehab - holdingCosts - closingCosts - miscCosts - sellingCostsAmount - desiredProfit;
+      
+      /*
+        ===============================================================
+        SECTION 5: LOAN PAYMENT CALCULATIONS BY STRUCTURE TYPE
+        ===============================================================
+      */
+      
+      const monthlyRate = (interestRate/100)/12;        // Convert annual rate to monthly
+      let monthlyPayment = 0, totalInterest = 0, balloonPayment = 0;
+      
+      if (loanTerm === 0) {
+        // No loan term specified - no payments
+        monthlyPayment = 0;
+        totalInterest = 0;
+        balloonPayment = 0;
+      } 
+      else if(loanStructure === 'Interest-Only'){
+        // Interest-Only Loan: Pay only interest monthly, principal due at end
+        monthlyPayment = initialLoan * monthlyRate;
+        totalInterest = monthlyPayment * loanTerm;
+        balloonPayment = initialLoan;                   // Full principal due at maturity
+      } 
+      else if(loanStructure === 'Balloon'){
+        // Balloon Loan: Interest-only payments + large balloon payment at end
+        monthlyPayment = initialLoan * monthlyRate;     // Interest-only monthly payments
+        totalInterest = monthlyPayment * loanTerm;      // Total interest over term
+        balloonPayment = initialLoan;                   // Full principal due at end
+      } 
+      else {
+        // Amortizing Loan: Equal monthly payments covering principal + interest
+        if(monthlyRate > 0){
+          // Standard amortization formula: PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
+          monthlyPayment = initialLoan * 
+            (monthlyRate * Math.pow(1+monthlyRate, loanTerm)) / 
+            (Math.pow(1+monthlyRate, loanTerm) - 1);
+          totalInterest = (monthlyPayment * loanTerm) - initialLoan;
+        } else {
+          // Zero interest rate - simple principal division
+          monthlyPayment = loanTerm > 0 ? initialLoan/loanTerm : 0;
+          totalInterest = 0;
+        }
+      }
+      
+      /*
+        ===============================================================
+        SECTION 6: CASH REQUIREMENTS AND PROFIT ANALYSIS
+        ===============================================================
+      */
+      
+      // Borrower cash needed at closing
+      // Includes: Purchase + Closing Costs (if not lender-covered) + Points + Misc + Unfunded Rehab - Loan
+      const borrowerCashAtClosing = Math.max(0, 
+        purchasePrice + 
+        (lenderCoversClosing ? 0 : closingCosts) + 
+        pointsCost + 
+        miscCosts + 
+        rehabNotFunded - 
+        initialLoan
+      );
+      
+      // Total liquidity required (cash at closing + holding costs during project)
+      const liquidityRequired = Math.max(0, borrowerCashAtClosing + holdingCosts);
+      
+      // Net proceeds from sale (ARV minus selling costs)
+      const netFromSale = arv - sellingCostsAmount;
+      
+      // CORRECTED: Principal repayment calculation based on loan structure
+      let principalRepayment;
+      if (loanStructure === 'Interest-Only' || loanStructure === 'Balloon') {
+        // For Interest-Only and Balloon loans: balloonPayment IS the full principal
+        principalRepayment = balloonPayment;
+      } else {
+        // For Amortizing loans: principal is paid down over time, balloon is any remaining balance
+        principalRepayment = initialLoan + balloonPayment;
+      }
+      
+      // CORRECTED: Total loan repayment calculation based on loan structure
+      let totalLoanRepayment;
+      if (loanStructure === 'Interest-Only' || loanStructure === 'Balloon') {
+        // For Interest-Only/Balloon: Total = Principal + Interest (don't double-count principal)
+        totalLoanRepayment = initialLoan + totalInterest;
+      } else {
+        // For Amortizing: Total = Principal + Interest + any Balloon
+        totalLoanRepayment = initialLoan + totalInterest + balloonPayment;
+      }
+      
+      // Net proceeds after paying off loan principal (for profit calculation)
+      const netProceedsAfterLoan = netFromSale - principalRepayment;
+      
+      // CORRECTED: Total out-of-pocket investment (includes all costs AND interest payments)
+      const outOfPocket = borrowerCashAtClosing + holdingCosts + totalInterest;
+      
+      // CORRECTED: Final net profit calculation (no double-counting)
+      // Formula: Net Profit = Sale Proceeds - Loan Principal - Total Out of Pocket (including interest)
+      const netProfit = netProceedsAfterLoan - outOfPocket;
+      
+      // Return on Investment calculation (profit / investment * 100)
+      let roi = 0;
+      if (outOfPocket > 0 && isFinite(netProfit)) {
+        roi = (netProfit / outOfPocket) * 100;
+      }
+
+      /*
+        ===============================================================
+        SECTION 7: USER INTERFACE UPDATES
+        ===============================================================
+      */
+
+      /*
+        ===============================================================
+        SECTION 7: USER INTERFACE UPDATES
+        ===============================================================
+      */
+
+      /**
+       * Helper Function: setVal
+       * Purpose: Safely updates UI fields with calculated values
+       * 
+       * @param {string} id - Element ID to update
+       * @param {number} val - Numeric value to display
+       * @param {boolean} fmt - Whether to format as currency (default: true)
+       * 
+       * Logic:
+       * - For input fields: Only update if user has entered a value (preserves placeholders)
+       * - For calculated fields: Always update with new calculated value
+       * - Applies currency formatting when fmt=true
+       */
+      const setVal = (id,val,fmt=true)=>{
+        const el = $('#'+id);
+        if(!el) return;
+        
+        // Check if this is a user input field vs calculated display field
+        const input = document.querySelector(`[name="${id}"]`);
+        if (input) {
+          // This is an input field - only update if user has entered data
+          if (input.value !== '') {
+            el.value = fmt ? fmtCurrency(val) : String(val);
+          } else {
+            el.value = '';  // Keep empty to show placeholder
+          }
+        } else {
+          // This is a calculated display field - always update
+          el.value = fmt ? fmtCurrency(val) : String(val);
+        }
+      };
+
+      // Update all loan-related calculated fields
+      setVal('maximumLoan', maximumLoan);           // Maximum loan amount based on LTV
+      setVal('initialLoan', initialLoan);           // Actual initial loan amount
+      setVal('totalProjectCost', totalProjectCost); // Total cost of entire project
+      setVal('idealPurchase', idealPurchase);       // Ideal purchase price for target profit
+      setVal('rehabNotFunded', rehabNotFunded);     // Rehab amount not covered by loan
+      setVal('rehabDraw', rehabDraw);               // Rehab amount funded by loan
+      setVal('totalLoanAmount', initialLoan);       // Total loan amount (duplicate of initialLoan)
+      setVal('mao', mao);                           // Maximum Allowable Offer
+      setVal('netResale', sellingCostsAmount);      // Selling costs in dollars
+      setVal('cashToFundRehab', rehabNotFunded);    // Cash needed for unfunded rehab
+      setVal('borrowerCash', borrowerCashAtClosing);// Cash required at closing
+      setVal('liquidity', liquidityRequired);       // Total liquidity needed
+      setVal('monthlyPayment', monthlyPayment);     // Monthly loan payment
+
+      // Update profit analysis fields (these are always calculated fields)
+      $('#profit_netFromSale').value = fmtCurrency(netFromSale);           // Net from sale after costs
+      $('#profit_totalLoanRepayment').value = fmtCurrency(totalLoanRepayment); // Total loan repayment
+      $('#profit_netProceeds').value = fmtCurrency(netProceedsAfterLoan);  // Net proceeds after loan payoff
+      $('#profit_outOfPocket').value = fmtCurrency(outOfPocket);           // Total out-of-pocket investment
+      $('#profit_netProfit').value = fmtCurrency(netProfit);               // Final net profit
+      $('#profit_roi').value = roi.toFixed(1) + '%';                      // Return on Investment percentage
+
+      /*
+        ===============================================================
+        SECTION 8: DESIRED PROFIT SOLVER (PURCHASE PRICE OPTIMIZATION)
+        ===============================================================
+        
+        This section uses binary search to find the maximum purchase price
+        that will still achieve the user's desired profit target.
+        
+        Algorithm:
+        1. Set search range: $0 to ARV
+        2. Test middle price point using simulateProfit()
+        3. If profit >= desired: try higher price (move left boundary)
+        4. If profit < desired: try lower price (move right boundary)  
+        5. Repeat until optimal price found
+        6. Fine-tune result with small increments
+      */
+      if(desiredProfit > 0 && arv > 0){
+        let low = 0, high = arv, best = null;
+        
+        // Binary search for optimal purchase price (up to 100 iterations for precision)
+        for(let i=0; i<100; i++){
+          let mid = (low + high) / 2;                     // Test middle point
+          const p = simulateProfit(mid);                  // Calculate profit at this price
+          
+          if (p >= desiredProfit) {
+            best = mid;                                   // This price works
+            low = mid + 0.01;                            // Try higher price
+          } else {
+            high = mid - 0.01;                           // Price too high, try lower
+          }
+        }
+        
+        // Fine-tune the result with small incremental steps
+        if (best !== null && simulateProfit(best) >= desiredProfit) {
+          let step = 0.01;                                // Small increment step
+          let candidate = best;
+          
+          // Increase price in small steps while maintaining desired profit
+          while (candidate + step <= arv && simulateProfit(candidate + step) >= desiredProfit) {
+            candidate += step;
+          }
+          
+          $('#purchaseForDesired').textContent = fmtCurrency(candidate);
+        } else {
+          $('#purchaseForDesired').textContent = '—';     // No solution found
+        }
+      } else {
+        $('#purchaseForDesired').textContent = '—';       // No desired profit specified
+      }
+
+      /*
+        ===============================================================
+        SECTION 9: DATA STORAGE AND UI REFRESH
+        ===============================================================
+      */
+
+      // Store calculation snapshot for saving deals functionality
+      // This allows users to save current analysis results with input values
+      
+      // Get the calculated purchase price for desired profit
+      let purchaseForDesiredProfit = 0;
+      const purchaseForDesiredElement = document.getElementById('purchaseForDesired');
+      if (purchaseForDesiredElement && purchaseForDesiredElement.textContent !== '—') {
+        purchaseForDesiredProfit = parseNum(purchaseForDesiredElement.textContent);
+      }
+      
+      window._lastCalc = {
+        inputs: collectInputs(),                          // All current input values
+        calculations: { 
+          // Core loan calculations
+          maximumLoan, initialLoan, totalProjectCost, rehabNotFunded, rehabDraw, 
+          totalLoanRepayment, netProceedsAfterLoan, outOfPocket, netProfit, roi, monthlyPayment,
+          
+          // Purchase analysis metrics - THESE WERE MISSING!
+          mao,                          // Maximum Allowable Offer
+          idealPurchase,               // Ideal Purchase Price  
+          purchaseForDesired: purchaseForDesiredProfit, // Purchase Price for Desired Profit
+          
+          // Additional metrics for comprehensive export
+          borrowerCash: borrowerCashAtClosing,  // Cash at closing
+          liquidityRequired,                    // Total liquidity needed
+          netFromSale,                         // Net proceeds from sale
+          sellingCostsAmount                   // Selling costs in dollars
+        }
+      };
+
+  // Refresh all dependent UI components with new calculations
+  renderSavedPreview();     // Refresh saved deals display
+  renderCompareList();      // Update comparison chart options
+    }
+
+    // simulateProfit: same logic as calculateAll but takes purchase price as parameter.
+    // Used by the desiredProfit solver to find the purchase price that yields the requested profit.
+    function simulateProfit(purchase){
+      const get = name => parseNum(($('[name="'+name+'"]')||{}).value);
+      const arv = get('arv'), rehabBudget = get('rehabBudget'), contingency = get('contingency');
+      const totalRehab = rehabBudget + rehabBudget*(contingency/100), closingCosts = get('closingCosts');
+      const ltv = get('ltv'), points = get('points'), interestRate = get('interestRate');
+      const loanTerm = get('loanTerm'); // use value from input only
+      const holdingCosts = get('holdingCosts'), salesCostsPct = get('salesCosts');
+      const miscCosts = get('miscCosts');
+      const loanStructure = ($('[name="loanStructure"]')||{}).value || 'Amortizing';
+      const lenderCoversClosing = document.getElementById('lenderCoversClosing')?.checked;
+
+      const maximumLoan = arv*(ltv/100);
+      const closingCostsForLoan = lenderCoversClosing ? closingCosts : 0;
+      const lenderAvail = Math.max(0, maximumLoan - purchase - closingCostsForLoan);
+      const rehabNotFunded = Math.max(0, totalRehab - lenderAvail);
+      const rehabDraw = totalRehab - rehabNotFunded;
+  // Only include closing costs in the loan if lender covers them (checked)
+  const initialLoan = Math.min(maximumLoan, purchase + (lenderCoversClosing ? closingCosts : 0) + rehabDraw);
+      const pointsCost = initialLoan*(points/100);
+
+      const monthlyRate = (interestRate/100)/12;
+      let totalInterest=0, balloonPayment=0;
+      if(loanStructure === 'Interest-Only'){
+        totalInterest = initialLoan * monthlyRate * loanTerm;
+        balloonPayment = initialLoan;  // FIXED: Interest-Only requires full principal repayment at end
+      } else if(loanStructure === 'Balloon'){
+        totalInterest = initialLoan * monthlyRate * loanTerm;
+        balloonPayment = initialLoan;
+      } else if(monthlyRate>0){
+        const monthlyPayment = initialLoan * (monthlyRate * Math.pow(1+monthlyRate,loanTerm)) / (Math.pow(1+monthlyRate,loanTerm)-1);
+        totalInterest = (monthlyPayment*loanTerm)-initialLoan;
+      }
+
+      const sellingCostsAmount = arv*(salesCostsPct/100);
+      const netFromSale = arv - sellingCostsAmount;
+      
+      // CORRECTED: Principal repayment calculation based on loan structure
+      let principalRepayment;
+      if (loanStructure === 'Interest-Only' || loanStructure === 'Balloon') {
+        // For Interest-Only and Balloon loans: balloonPayment IS the full principal
+        principalRepayment = balloonPayment;
+      } else {
+        // For Amortizing loans: principal is paid down over time, balloon is any remaining balance
+        principalRepayment = initialLoan + balloonPayment;
+      }
+      
+      const netProceedsAfterLoan = netFromSale - principalRepayment;
+      
+      const borrowerCashAtClosing = Math.max(0, purchase + (lenderCoversClosing ? 0 : closingCosts) + pointsCost + miscCosts + rehabNotFunded - initialLoan);
+      const outOfPocket = borrowerCashAtClosing + holdingCosts + totalInterest;  // FIXED: Include interest in out-of-pocket costs
+      return netProceedsAfterLoan - outOfPocket;
+    }
+
+    /*
+      =================================================================
+      DEAL DATA COLLECTION - WHAT GETS SAVED TO LOCALSTORAGE
+      =================================================================
+      
+      This section handles collecting all user inputs and calculated results
+      to create a complete deal object for saving to localStorage.
+      
+      COMPLETE DEAL OBJECT STRUCTURE:
+      Each saved deal contains the following data:
+      
+      METADATA:
+      - id: Unique timestamp-based identifier (String: "1695652800000")
+      - name: Deal name/property address (String: "123 Main Street") 
+      - address: Full address with city, state, zip (String: "Houston, TX 77002")
+      - notes: User notes about the deal (String: "Great neighborhood...")
+      - savedAt: Date/time when deal was saved (String: "9/25/2025, 2:30:15 PM")
+      
+      USER INPUTS (inputs object):
+      All form field values exactly as entered by user:
+      - arv: After Repair Value (String: "$ 400,000.00")
+      - purchasePrice: Purchase price (String: "$ 250,000.00") 
+      - rehabBudget: Renovation budget (String: "$ 50,000.00")
+      - contingency: Contingency percentage (String: "10.00 %")
+      - closingCosts: Closing costs (String: "$ 5,000.00")
+      - holdingCosts: Holding costs (String: "$ 8,000.00")
+      - miscCosts: Miscellaneous costs (String: "$ 2,000.00")
+      - salesCosts: Sales costs percentage (String: "6.00 %")
+      - ltv: Loan-to-Value percentage (String: "70.00 %")
+      - points: Loan points percentage (String: "2.00 %")
+      - interestRate: Interest rate (String: "12.00 %")
+      - loanTerm: Loan term in months (String: "12")
+      - loanStructure: Loan type (String: "Interest-Only")
+      - desiredProfit: Target profit (String: "$ 40,000.00")
+      
+      CALCULATED RESULTS (calculations object):
+      All computed financial metrics:
+      - netProfit: Final profit amount (Number: 35420.50)
+      - roi: Return on Investment percentage (Number: 22.8)
+      - outOfPocket: Total cash required (Number: 155000.00)
+      - liquidityRequired: Total liquidity needed (Number: 163000.00)
+      - monthlyPayment: Monthly loan payment (Number: 2100.00)
+      - maximumLoan: Max loan amount (Number: 280000.00)
+      - initialLoan: Actual loan amount (Number: 252000.00)
+      - rehabNotFunded: Unfunded rehab amount (Number: 8000.00)
+      - totalProjectCost: Total project cost (Number: 322040.00)
+      - idealPurchase: Ideal purchase price (Number: 235000.00)
+      - mao: Maximum Allowable Offer (Number: 228000.00)
+      
+      DATA SIZES:
+      - Typical deal object: ~2-4KB of JSON data
+      - 1,000 deals ≈ 2-4MB storage usage
+      - LocalStorage limit: ~5-10MB per domain
+      - Estimated capacity: 2,500-5,000+ deals
+    */
+    
+    /**
+     * Function: collectInputs
+     * Purpose: Captures a complete snapshot of ALL user inputs for saving
+     * 
+     * What it captures:
+     * - Every input field with a 'name' attribute
+     * - All values exactly as formatted and displayed to user  
+     * - Includes currency formatting ($ 250,000.00)
+     * - Includes percentage formatting (12.00 %)
+     * - Select dropdowns (loan structure)
+     * - Checkboxes (lender covers closing costs)
+     * 
+     * How it works:
+     * 1. Finds all DOM elements with [name] attributes
+     * 2. Creates object with name as key, value as property
+     * 3. Returns complete snapshot for storage
+     * 
+     * @returns {Object} Complete inputs object with all user-entered values
+     * 
+     * Example output:
+     * {
+     *   "arv": "$ 400,000.00",
+     *   "purchasePrice": "$ 250,000.00", 
+     *   "rehabBudget": "$ 50,000.00",
+     *   "ltv": "70.00 %",
+     *   "loanStructure": "Interest-Only",
+     *   ...all other input fields
+     * }
+     */
+    function collectInputs(){ 
+      const data = {}; 
+      $all('[name]').forEach(input => {
+        // For numeric fields, save the raw numeric value instead of formatted value
+        const dataType = input.getAttribute('data-type');
+        if (dataType === 'currency' || dataType === 'percent' || dataType === 'number') {
+          data[input.name] = String(parseNum(input.value) || 0);
+        } else {
+          data[input.name] = input.value;
+        }
+      }); 
+      return data; 
+    }
+
+    /* 
+      =================================================================
+      DEAL PERSISTENCE FUNCTIONS - LOCALSTORAGE OPERATIONS
+      =================================================================
+      
+      These functions handle all data persistence operations using browser's LocalStorage API.
+      
+      Storage Architecture:
+      - Key: 'hf_saved_deals_v5' (defined in STORAGE constant)
+      - Format: JSON array of deal objects
+      - Location: Browser's localStorage (persistent across sessions)
+      - Capacity: 2,500-5,000+ deals (varies by deal complexity and browser limits)
+      
+      Data Flow:
+      1. loadDeals() - Retrieves deals from localStorage, returns array
+      2. saveDealObj() - Adds new deal to array and saves back to localStorage
+      3. deleteDeal() - Removes deal by ID and saves updated array
+      
+      Error Handling:
+      - JSON.parse errors return empty array []
+      - Corrupted data gracefully handled
+      - Storage quota exceeded handled by browser
+      
+      Functions:
+      - loadDeals(): Returns array from localStorage, with safe JSON parse
+      - saveDealObj(dealObject): Appends new deal and writes back to localStorage  
+      - deleteDeal(id): Removes deal by id and writes back to localStorage
+    */
+    
+    /**
+     * Function: loadDeals
+     * Purpose: Safely loads all saved deals from browser localStorage
+     * 
+     * Returns: Array of deal objects, or empty array [] if no deals or error
+     * 
+     * Error Handling:
+     * - If localStorage is empty, returns []
+     * - If JSON is corrupted, catches exception and returns []
+     * - Handles browser storage being disabled/unavailable
+     */
+    function loadDeals(){ 
+      try{ 
+        return JSON.parse(localStorage.getItem(STORAGE)||'[]'); 
+      } catch(e) { 
+        console.warn('Could not load deals from localStorage:', e);
+        return []; 
+      } 
+    }
+    
+    /**
+     * Function: saveDealObj  
+     * Purpose: Adds a new deal to the saved deals array and persists to localStorage
+     * 
+     * @param {Object} dealObject - Complete deal object with inputs, calculations, metadata
+     * 
+     * Process:
+     * 1. Load existing deals array from localStorage
+     * 2. Append new deal to end of array
+     * 3. Save updated array back to localStorage as JSON string
+     * 
+     * Storage Format: Each deal object contains:
+     * - id: Unique timestamp-based identifier
+     * - name: Deal name/address
+     * - address: City, state, zip
+     * - notes: User notes
+     * - savedAt: Timestamp when saved
+     * - inputs: All user input values (ARV, purchase price, etc.)
+     * - calculations: All computed results (profit, ROI, etc.)
+     */
+    function saveDealObj(d){ 
+      const arr = loadDeals(); 
+      arr.push(d); 
+      localStorage.setItem(STORAGE, JSON.stringify(arr)); 
+    }
+    
+    /**
+     * Function: deleteDeal
+     * Purpose: Removes a specific deal by ID and updates localStorage
+     * 
+     * @param {string} id - Unique deal identifier to remove
+     * 
+     * Process:
+     * 1. Load current deals array
+     * 2. Filter out deal matching the provided ID
+     * 3. Save filtered array back to localStorage
+     * 
+     * Note: Uses filter() method which creates new array without the deleted deal
+     */
+    function deleteDeal(id){ 
+      let arr = loadDeals(); 
+      arr = arr.filter(deal => deal.id !== id); 
+      localStorage.setItem(STORAGE, JSON.stringify(arr)); 
+    }
+
+    // renderSavedPreview: create DOM preview cards for saved deals with View, Export, Delete
+    function renderSavedPreview(){
+      const wrap = elems.savedDeals; const arr = loadDeals(); wrap.innerHTML='';
+      if(!arr.length){ wrap.textContent='No saved deals'; return; }
+      arr.slice().reverse().forEach(d=>{
+        const el = document.createElement('div'); el.className='p-3 panel';
+        el.innerHTML = `<div class="flex justify-between items-start">
+          <div>
+            <div class="font-medium">${escapeHtml(d.name)}</div>
+            <div class="small muted">${d.savedAt}</div>
+            <div class="small muted mt-1"><strong>ARV:</strong> ${fmtCurrency(parseNum(d.inputs.arv))}</div>
+            <div class="small muted"><strong>Purchase:</strong> ${fmtCurrency(parseNum(d.inputs.purchasePrice))}</div>
+            <div class="small muted"><strong>Net:</strong> ${fmtCurrency(d.calculations.netProfit||0)}</div>
+          </div>
+          <div class="flex flex-col gap-2 items-end mt-1">
+            <button class="viewDeal btn-accent px-3 py-1 rounded-lg" style="min-width:86px;background:#2563eb;color:#fff" data-id="${d.id}">Load</button>
+            <button class="deleteDeal px-3 py-1 rounded-lg" style="min-width:86px;background:var(--danger);color:#fff" data-id="${d.id}">Delete</button>
+          </div>
+        </div>`;
+        wrap.appendChild(el);
+      });
+      $all('.viewDeal').forEach(b=> b.onclick = e=>{
+        const id=e.target.dataset.id; const d=loadDeals().find(x=>x.id===id); if(!d) return;
+        showOverwriteModal(
+          'Do you want to load this saved deal? All current data will be replaced.',
+          () => {
+            // Load input values
+            Object.keys(d.inputs||{}).forEach(k=>{
+              const el=$('[name="'+k+'"]'); 
+              if(el) {
+                el.value=d.inputs[k];
+                // Trigger input and change events to update formatting and calculations
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('Set', k, 'to', d.inputs[k]);
+              } else {
+                console.warn('Field not found:', k);
+              }
+            });
+            // Load deal information
+            $('#dealName').value=d.name||''; 
+            $('#dealAddress').value=d.address||''; 
+            $('#dealNotes').value=d.notes||'';
+            // Recalculate and scroll to top
+            calculateAll(); 
+            window.scrollTo({top:0,behavior:'smooth'});
+            showInfoToast('Saved deal loaded');
+          },
+          () => {}
+        );
+      });
+      $all('.deleteDeal').forEach(b=> b.onclick = e=>{
+        const dealId = e.target.dataset.id;
+        showInfoModal('Delete saved record', 
+          () => {
+            // User clicked "Yes" - delete the deal
+            deleteDeal(dealId); 
+            renderSavedPreview(); 
+            renderCompareList();
+            showInfoToast('Deal deleted successfully');
+          },
+          () => {
+            // User clicked "No" - do nothing
+          },
+          'Saved Deal'
+        );
+      });
+      $all('.exportDeal').forEach(b=> b.onclick = e=>{
+        const id=e.target.dataset.id; const d = loadDeals().find(x=>x.id===id); if(!d) return;
+        const txt = JSON.stringify(d, null, 2);
+        const blob=new Blob([txt],{type:'application/json'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`deal_${d.id}.json`; a.click(); URL.revokeObjectURL(a.href);
+      });
+    }
+
+    /* Compare chart
+       - renderCompareList builds the checkbox list for saved deals.
+       - refreshChart reads checked items and draws a mixed Chart.js visualization:
+         bar = Net Profit ($), line = ROI (%)
+    */
+    let chart = null;
+    function renderCompareList(){
+      const wrap = elems.compareList; wrap.innerHTML=''; const arr = loadDeals();
+      if(!arr.length){ wrap.innerHTML='<div class="muted small">No saved deals</div>'; return; }
+      arr.slice().reverse().forEach(d=>{ 
+        const row = document.createElement('div'); 
+        row.className='flex items-center justify-between p-2 border rounded'; 
+        row.innerHTML=`
+          <label><input class="cmpchk" data-id="${d.id}" type="checkbox"> <span class="small"> ${escapeHtml(d.name || '')} | ${escapeHtml(d.address || '')}</span></label>`; 
+        wrap.appendChild(row); 
+      });
+      $all('.cmpchk').forEach(c=> c.addEventListener('change', ()=> setTimeout(refreshChart,120)));
+    }
+    function refreshChart(){
+      const checked = Array.from(document.querySelectorAll('.cmpchk:checked')).map(i=> i.dataset.id);
+      const arr = loadDeals().filter(d=> checked.includes(d.id));
+      const labels = arr.map(d=> d.name || ''); // Show only street address (name field)
+      const profits = arr.map(d=> Math.round(d.calculations.netProfit||0));
+      const rois = arr.map(d=> Number((d.calculations.roi||0).toFixed(1)));
+      const ctx = elems.compareChart.getContext('2d');
+      if(chart) chart.destroy();
+      if(!labels.length){ ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); return; }
+      chart = new Chart(ctx, {
+        data:{ labels, datasets:[
+          { type:'bar', label:'Net Profit ($)', data:profits, backgroundColor:'rgba(37,99,235,1)', borderColor:'rgba(29,78,216,1)', borderWidth:2 },
+          { type:'line', label:'ROI (%)', data:rois, borderColor:'rgba(5,150,105,1)', backgroundColor:'rgba(5,150,105,0.2)', borderWidth:3, yAxisID:'y1', tension:0.25, fill:true }
+        ]},
+        options:{ 
+          responsive:true, 
+          interaction:{mode:'index',intersect:false}, 
+          plugins: {
+            tooltip: {
+              enabled: true,
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales:{ y:{ beginAtZero:true }, y1:{ position:'right', grid:{display:false} } } 
+        }
+      });
+    }
+
+    /* Events and initialization
+       - Wire buttons, inputs, and controls to their handlers.
+       - Call init() at the end to render initial UI and compute defaults.
+    */
+    setupFormatting();
+    $all('input[name], select[name]').forEach(i=> { i.addEventListener('change', calculateAll); i.addEventListener('blur', calculateAll); });
+    // Ensure lender covers closing costs checkbox triggers calculation
+    const lenderCoversCheckbox = document.getElementById('lenderCoversClosing');
+    if (lenderCoversCheckbox) {
+      lenderCoversCheckbox.addEventListener('change', calculateAll);
+    }
+    elems.applyMargins.addEventListener('click', ()=>{ 
+      const marginResult = parseMargins($('#margins').value);
+      if (!marginResult.valid) {
+        showInfoOnly(marginResult.error, 'Invalid Input');
+        return;
+      }
+  settings.quickMargins = marginResult.numbers; 
+  sessionStorage.setItem(SETTINGS, JSON.stringify(settings)); 
+  renderOffers(); // Only call renderOffers when Apply is clicked
+    });
+  //  Logic: When clicked, it scrolls to the calculator input section (#calculator)
+    elems.showInputs.addEventListener('click', ()=> window.scrollTo({top: document.querySelector('#calculator').offsetTop-80, behavior:'smooth'}));
+
+    elems.saveDeal.addEventListener('click', ()=>{
+      // Use Address (street) and City for uniqueness checks
+      const street = (elems.dealName.value || '').trim();
+      const cityRaw = (elems.dealAddress.value || '').trim();
+      const city = getCityPart(cityRaw);
+      if(!street){ showInfoOnly('Address, City, State, etc. required. Notes (optional)', 'Deal information required'); return; }
+      if(!city){ showInfoOnly('Enter city (City, State, Zip)', 'Deal information required'); return; }
+
+      /*
+        =================================================================
+        COMPLETE DEAL OBJECT CREATION - WHAT GETS SAVED
+        =================================================================
+        
+        This object contains EVERYTHING needed to recreate and analyze the deal:
+        
+        METADATA PROPERTIES:
+        - id: Unique identifier for database operations and duplicate detection
+        - name: Property street address (used for display and searching)
+        - address: Complete address for location context and duplicate checking
+        - notes: User notes for deal context and decision-making
+        - savedAt: Timestamp for audit trail and chronological sorting
+        
+        DATA PROPERTIES:
+        - inputs: COMPLETE snapshot of all user-entered values (formatted)
+        - calculations: COMPLETE snapshot of all computed results (raw numbers)
+        
+        STORAGE SIZE: ~2-4KB per deal (varies by input complexity)
+        PERSISTENCE: Stored permanently in browser localStorage until manually deleted
+      */
+      const obj = {
+        // === METADATA SECTION ===
+        id: String(Date.now()),                         // Unique ID: "1695652800000" 
+        name: street,                                    // Property address: "123 Main Street"
+        address: cityRaw,                               // Full address: "Houston, TX 77002"  
+        notes: elems.dealNotes.value || '',            // User notes: "Great neighborhood, needs work"
+        savedAt: (new Date()).toLocaleString(),         // Save timestamp: "9/25/2025, 2:30:15 PM"
+        
+        // === USER INPUT DATA ===
+        // Complete snapshot of ALL form fields (with formatting preserved)
+        // Examples: "$ 400,000.00", "12.00 %", "Interest-Only"
+        inputs: collectInputs(),                         // Object with ALL user-entered values
+        
+        // === CALCULATED RESULTS ===  
+        // Complete snapshot of ALL computed financial metrics (raw numbers)
+        // Examples: 35420.50, 22.8, 155000.00
+        calculations: (window._lastCalc && window._lastCalc.calculations) ? window._lastCalc.calculations : {}
+      };
+
+      const deals = loadDeals();
+      const match = deals.find(d=>{
+        const existingStreet = normalizeText(d.name || '');
+        const existingCity = normalizeText(getCityPart(d.address || ''));
+        return existingStreet === normalizeText(street) && existingCity === normalizeText(city);
+      });
+
+      if(match){
+        // Show modal to accept (overwrite) or reject (cancel)
+        showOverwriteModal(
+          `A saved deal with the same address and city already exists: "${match.name}" — "${match.address}". Click Overwrite to replace it or Cancel to keep the existing one.`,
+          ()=>{ // onAccept -> overwrite (no additional windows, just show toast)
+            obj.id = match.id; // preserve id
+            const updated = deals.map(d=> d.id === match.id ? obj : d);
+            localStorage.setItem(STORAGE, JSON.stringify(updated));
+            renderSavedPreview(); renderCompareList();
+            showInfoToast('Deal overwritten'); // Use toast instead of alert popup
+          },
+          ()=>{ /* user cancelled — do nothing */ }
+        );
+        return;
+      }
+
+      // Show confirmation modal before saving
+      showInfoModal('Do you want to save this deal information?', 
+        () => {
+          // User clicked "Yes" - save the deal
+          saveDealObj(obj); 
+          renderSavedPreview(); 
+          renderCompareList(); 
+          showInfoToast('Deal saved successfully');
+        },
+        () => {
+          // User clicked "No" - do nothing
+        },
+        'Save this Information'
+      );
+    });
+
+    elems.resetInputs.addEventListener('click', ()=>{
+      showInfoModal(
+        'Do you really want to reset? All entered data will be cleared.',
+        () => {
+          // Clear all input fields
+          $all('input[name]').forEach(input => input.value = '');
+          $all('select[name]').forEach(select => select.selectedIndex = 0);
+          const lenderCoversCheckbox = document.getElementById('lenderCoversClosing');
+          if (lenderCoversCheckbox) lenderCoversCheckbox.checked = false;
+          $('#margins').value = '';
+          $('#dealName').value=''; $('#dealAddress').value=''; $('#dealNotes').value='';
+          // Clear all calculated fields
+          [
+            'maximumLoan', 'initialLoan', 'totalProjectCost', 'rehabNotFunded', 'rehabDraw',
+            'totalLoanAmount', 'mao', 'netResale', 'cashToFundRehab', 'borrowerCash', 'liquidity',
+            'monthlyPayment', 'profit_netFromSale', 'profit_totalLoanRepayment', 'profit_netProceeds',
+            'profit_outOfPocket', 'profit_netProfit', 'profit_roi'
+          ].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+          // Clear purchaseForDesired
+          const pfd = document.getElementById('purchaseForDesired');
+          if (pfd) pfd.textContent = '—';
+          // Reset quick offers to placeholder state
+          renderOffers();
+          calculateAll();
+        },
+        () => { /* Cancelled, do nothing */ },
+        'Reset All Data'
+      );
+    });
+
+    elems.exportAll.addEventListener('click', ()=>{
+      const arr = loadDeals(); 
+      if(!arr.length){ 
+        showInfoOnly('No saved deals available', 'Export Error'); 
+        return; 
+      }
+
+      // Show export options modal
+      showExportOptionsModal();
+    });
+
+    /**
+     * Function: showExportOptionsModal
+     * Purpose: Display modal with different export format options
+     */
+    function showExportOptionsModal() {
+      const existing = document.getElementById('hf-export-modal');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'hf-export-modal';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.45)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = 9999;
+
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.color = '#111';
+      box.style.padding = '20px';
+      box.style.borderRadius = '8px';
+      box.style.maxWidth = '480px';
+      box.style.width = '92%';
+      box.style.boxShadow = '0 8px 30px rgba(0,0,0,0.25)';
+      
+      box.innerHTML = `
+        <div style="margin-bottom:16px;font-weight:600;font-size:16px">Choose Export Format</div>
+        <div style="margin-bottom:20px;color:#666;line-height:1.4">Select the format for exporting your saved deals:</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+          <button id="hf-export-csv" style="padding:12px 16px;border-radius:6px;border:1px solid #ddd;background:#f8f9fa;color:#111;text-align:left;cursor:pointer">
+            <strong>Excel</strong><br>
+            <span style="font-size:13px;color:#666">Spreadsheet format with all deal data</span>
+          </button>
+          <button id="hf-export-json" style="padding:12px 16px;border-radius:6px;border:1px solid #ddd;background:#f8f9fa;color:#111;text-align:left;cursor:pointer">
+            <strong>JSON (Complete Backup)</strong><br>
+            <span style="font-size:13px;color:#666">Full data backup for re-importing</span>
+          </button>
+          <button id="hf-export-txt" style="padding:12px 16px;border-radius:6px;border:1px solid #ddd;background:#f8f9fa;color:#111;text-align:left;cursor:pointer">
+            <strong>Text Report</strong><br>
+            <span style="font-size:13px;color:#666">Simple summary report</span>
+          </button>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="hf-export-cancel" style="padding:8px 12px;border-radius:6px;border:1px solid #cfcfcf;background:#fff;color:#111">Cancel</button>
+        </div>
+      `;
+      
+      // Prevent clicks inside modal from closing it
+      box.addEventListener('click', (e) => e.stopPropagation());
+      
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      function cleanup() {
+        const el = document.getElementById('hf-export-modal');
+        if (el) el.remove();
+      }
+
+      // Wire up export option buttons
+      document.getElementById('hf-export-csv').addEventListener('click', () => {
+        cleanup();
+        exportDealsAsCSV();
+      });
+
+      document.getElementById('hf-export-json').addEventListener('click', () => {
+        cleanup();
+        exportAllDealsAsJSON();
+      });
+
+      document.getElementById('hf-export-txt').addEventListener('click', () => {
+        cleanup();
+        exportDealsAsTextReport();
+      });
+
+      document.getElementById('hf-export-cancel').addEventListener('click', cleanup);
+      overlay.addEventListener('click', (e) => { 
+        if (e.target === overlay) cleanup(); 
+      });
+    }
+
+    /**
+     * Function: exportDealsAsTextReport
+     * Purpose: Exports deals as simple text report (original functionality)
+     */
+    function exportDealsAsTextReport() {
+      const arr = loadDeals();
+      let txt = `HOUSE FLIPPING DEALS REPORT\nGenerated: ${(new Date()).toLocaleString()}\nTotal Deals: ${arr.length}\n\n`;
+      txt += '='.repeat(60) + '\n\n';
+      
+      arr.forEach((d, i) => {
+        txt += `DEAL ${i + 1}: ${d.name}\n`;
+        txt += `Address: ${d.address || 'Not specified'}\n`;
+        txt += `ARV: ${fmtCurrency(d.inputs.arv || 0)}\n`;
+        txt += `Purchase: ${fmtCurrency(d.inputs.purchasePrice || 0)}\n`;
+        txt += `Net Profit: ${fmtCurrency(d.calculations.netProfit || 0)}\n`;
+        txt += `ROI: ${(d.calculations.roi || 0).toFixed(1)}%\n`;
+        txt += `Saved: ${d.savedAt || 'Unknown'}\n`;
+        if (d.notes) txt += `Notes: ${d.notes}\n`;
+        txt += '\n' + '-'.repeat(40) + '\n\n';
+      });
+
+      const blob = new Blob([txt], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `house_flipping_report_${(new Date()).toISOString().slice(0, 10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      showInfoToast(`Text report exported: ${arr.length} deals`);
+    }
+
+    elems.refreshChart.addEventListener('click', refreshChart);
+    elems.clearCompare.addEventListener('click', ()=> { $all('.cmpchk').forEach(c=> c.checked=false); refreshChart(); });
+
+    // nav buttons
+    $all('.nav-btn').forEach(b=> b.addEventListener('click', ()=> {
+      const t=b.dataset.target;
+    //  When clicked, it scrolls the page to the calculator section (#calculator)
+      if(t==='calculator') window.scrollTo({top: document.querySelector('#calculator').offsetTop-80, behavior:'smooth'});
+        // When clicked, it scrolls exactly to the top of the Compare Chart & List panel using scrollIntoView
+        if(t==='compare') {
+          const panel = document.querySelector('#comparePanel');
+          if(panel) {
+            panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+          } else {
+            window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+          }
+        }
+      if(t==='saved') window.scrollTo({top: document.querySelector('#savedDeals').offsetTop-120, behavior:'smooth'});
+    }));
+
+    // theme toggle - When clicked, it scrolls to the calculator input section (#calculator)
+    elems.themeToggle.addEventListener('click', ()=> {
+      document.body.classList.toggle('dark');
+      
+      // FORCE INPUT COLORS WITH JAVASCRIPT
+      setTimeout(() => {
+        const isDark = document.body.classList.contains('dark');
+        const allInputs = document.querySelectorAll('.custom-input, input.custom-input, select.custom-input');
+        const allLabels = document.querySelectorAll('.small.muted, .muted, label, .lender-label, label[for="lenderCoversClosing"]');
+        
+        allInputs.forEach(input => {
+          if (isDark) {
+            // Dark mode colors
+            input.style.backgroundColor = 'rgb(31 41 55)';
+            input.style.color = 'rgb(209 213 219)';
+            input.style.borderColor = 'rgb(75 85 99)';
+          } else {
+            // Light mode colors - match Key Metrics
+            input.style.backgroundColor = '#f9fafb';
+            input.style.color = '#6b7280';
+            input.style.borderColor = '#003893';
+          }
+        });
+        
+        // Fix label colors too (including checkbox label)
+        allLabels.forEach(label => {
+          if (isDark) {
+            // Dark mode label color
+            label.style.color = 'rgba(255, 255, 255, 0.7)';
+          } else {
+            // Light mode label color - darker for visibility
+            label.style.color = '#374151'; // Darker gray for better visibility in light mode
+          }
+        });
+        
+        // EXTRA: Force checkbox label specifically with maximum specificity
+        const checkboxLabel = document.querySelector('label[for="lenderCoversClosing"]');
+        if (checkboxLabel) {
+          checkboxLabel.style.setProperty('color', isDark ? 'rgba(255, 255, 255, 0.7)' : '#374151', 'important');
+          console.log('Forced checkbox label color:', checkboxLabel.style.color);
+        }
+        
+        console.log('Forced colors for', allInputs.length, 'inputs and', allLabels.length, 'labels in', isDark ? 'DARK' : 'LIGHT', 'mode');
+      }, 50);
+      
+      // Switch icon
+      if(document.body.classList.contains('dark')) {
+        elems.themeToggle.textContent = '🌗'; // half moon for dark mode
+      } else {
+        elems.themeToggle.textContent = '☀️'; // sun for light mode
+      }
+    });
+    // Set initial icon based on mode
+    if(document.body.classList.contains('dark')) {
+      elems.themeToggle.textContent = '🌗';
+    } else {
+      elems.themeToggle.textContent = '☀️';
+    }
+
+    // FORCE CORRECT INPUT COLORS ON PAGE LOAD
+    function forceInputColors() {
+      const isDark = document.body.classList.contains('dark');
+      const allInputs = document.querySelectorAll('.custom-input, input.custom-input, select.custom-input');
+      const allLabels = document.querySelectorAll('.small.muted, .muted, label, .lender-label, label[for="lenderCoversClosing"]');
+      
+      allInputs.forEach(input => {
+        if (isDark) {
+          // Dark mode colors
+          input.style.backgroundColor = 'rgb(31 41 55)';
+          input.style.color = 'rgb(209 213 219)';
+          input.style.borderColor = 'rgb(75 85 99)';
+        } else {
+          // Light mode colors - match Key Metrics
+          input.style.backgroundColor = '#f9fafb';
+          input.style.color = '#6b7280';
+          input.style.borderColor = '#003893';
+        }
+      });
+      
+      // Fix label colors too (including checkbox label)
+      allLabels.forEach(label => {
+        if (isDark) {
+          // Dark mode label color
+          label.style.color = 'rgba(255, 255, 255, 0.7)';
+        } else {
+          // Light mode label color - darker for visibility
+          label.style.color = '#374151'; // Darker gray for better visibility in light mode
+        }
+      });
+      
+      // EXTRA: Force checkbox label specifically with maximum specificity
+      const checkboxLabel = document.querySelector('label[for="lenderCoversClosing"]');
+      if (checkboxLabel) {
+        checkboxLabel.style.setProperty('color', isDark ? 'rgba(255, 255, 255, 0.7)' : '#374151', 'important');
+        console.log('Forced checkbox label color:', checkboxLabel.style.color);
+      }
+      
+      console.log('Forced colors for', allInputs.length, 'inputs and', allLabels.length, 'labels in', isDark ? 'DARK' : 'LIGHT', 'mode');
+    }
+    
+    // Apply colors on page load
+    setTimeout(forceInputColors, 100);
+    setTimeout(forceInputColors, 500);
+    setTimeout(forceInputColors, 1500);
+
+    // helpers
+    function escapeHtml(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // initial
+  function init(){ renderOffers(); renderSavedPreview(); renderCompareList(); calculateAll(); }
+    init();
+
+    // expose for debugging
+    window.hf = { calculateAll, renderOffers, renderSavedPreview, renderCompareList, refreshChart };
+  })();
+  </script>
+
+  <script>
+  (function(){
+    // Custom tooltip for Loan Structure <option> elements
+    const select = document.getElementById('loanStructureSelect');
+    const loanStructureDescriptions = {
+      'Amortizing': 'Standard amortizing loan: equal monthly payments covering both principal and interest',
+      'Interest-Only': 'Interest-Only loan: pay only interest monthly, full principal due at end of term',
+      'Balloon': 'Balloon loan: low monthly interest-only payments, full principal due as balloon payment at end'
+    };
+    if (select) {
+      select.removeAttribute('title');
+      select.title = ' ';
+      Array.from(select.options).forEach(option => option.title = '');
+      select.style.fontSize = '10px';
+      select.addEventListener('mouseenter', function(e) {
+        const val = select.value;
+        select.title = loanStructureDescriptions[val];
+      });
+      select.addEventListener('mouseleave', function(e) {
+        select.title = ' ';
+      });
+    }
+  })();
+  </script>
+
+</body>
+</html>
